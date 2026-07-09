@@ -1,0 +1,359 @@
+[
+  {
+    "name": "Barbell Bench Press",
+    "slug": "barbell-bench-press",
+    "primaryMuscle": "pectorals",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["triceps", "front_deltoids"],
+    "equipment": "barbell",
+    "exerciseType": "strength",
+    "difficulty": "intermediate",
+    "instructions": [
+      "Lie flat on the bench with your feet flat on the floor.",
+      "Grip the barbell with hands slightly wider than shoulder-width apart.",
+      "Unrack the barbell and hold it directly over your chest with arms fully extended.",
+      "Lower the bar slowly to your mid-chest while keeping your elbows at roughly a 45-degree angle.",
+      "Push the bar back up powerfully to the starting position, extending your arms fully but not locking your elbows."
+    ],
+    "tips": [
+      "Keep your shoulder blades retracted and pressed into the bench throughout the lift.",
+      "Avoid bouncing the bar off your chest.",
+      "Ensure your feet remain planted firmly on the floor to maintain stability."
+    ],
+    "isCompound": true,
+    "isMachine": false,
+    "isBodyweight": false,
+    "recommendedExperience": "intermediate",
+    "recommendedGoal": "strength"
+  },
+  {
+    "name": "Incline Barbell Bench Press",
+    "slug": "incline-barbell-bench-press",
+    "primaryMuscle": "upper_chest",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["front_deltoids", "triceps"],
+    "equipment": "barbell",
+    "exerciseType": "hypertrophy",
+    "difficulty": "intermediate",
+    "instructions": [
+      "Set an incline bench to an angle of 30 to 45 degrees.",
+      "Lie on the bench and position your feet flat on the floor.",
+      "Grip the barbell with a medium-wide grip.",
+      "Unrack the bar and hold it straight above your upper chest.",
+      "Lower the bar under control until it lightly touches your upper chest.",
+      "Press the bar back up in a slight arc to the starting position."
+    ],
+    "tips": [
+      "Do not use too steep of an angle, or the shoulders will dominate the lift.",
+      "Keep your wrists stacked directly over your elbows.",
+      "Retract your scapula to protect your shoulders."
+    ],
+    "isCompound": true,
+    "isMachine": false,
+    "isBodyweight": false,
+    "recommendedExperience": "intermediate",
+    "recommendedGoal": "hypertrophy"
+  },
+  {
+    "name": "Decline Barbell Bench Press",
+    "slug": "decline-barbell-bench-press",
+    "primaryMuscle": "lower_chest",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["triceps", "front_deltoids"],
+    "equipment": "barbell",
+    "exerciseType": "strength",
+    "difficulty": "advanced",
+    "instructions": [
+      "Secure your feet under the pads of a decline bench under a 15-to-30-degree decline.",
+      "Lie down on the bench and grip the bar slightly wider than shoulder-width.",
+      "Unrack the bar and hold it straight over your lower chest.",
+      "Lower the bar slowly to your lower sternum.",
+      "Push the bar back up to the starting position with control."
+    ],
+    "tips": [
+      "Avoid letting the bar drift too far forward towards your stomach.",
+      "Ensure you have a spotter or safety pins as rack clearance can be tricky on decline.",
+      "Control the descent to protect your rib cage."
+    ],
+    "isCompound": true,
+    "isMachine": false,
+    "isBodyweight": false,
+    "recommendedExperience": "advanced",
+    "recommendedGoal": "strength"
+  },
+  {
+    "name": "Flat Dumbbell Press",
+    "slug": "flat-dumbbell-press",
+    "primaryMuscle": "pectorals",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["triceps", "front_deltoids"],
+    "equipment": "dumbbell",
+    "exerciseType": "hypertrophy",
+    "difficulty": "beginner",
+    "instructions": [
+      "Sit on the edge of a flat bench with a dumbbell in each hand resting on your knees.",
+      "Lie back on the bench, bringing the dumbbells to the sides of your chest with elbows bent at 90 degrees.",
+      "Press the dumbbells straight up over your chest until your arms are fully extended.",
+      "Lower the weights slowly and under control to the sides of your chest."
+    ],
+    "tips": [
+      "Maintain a neutral wrist position throughout the movement.",
+      "Do not clank the dumbbells together at the top of the movement.",
+      "Dumbbells allow for a deeper range of motion; use this to stretch the chest safely."
+    ],
+    "isCompound": true,
+    "isMachine": false,
+    "isBodyweight": false,
+    "recommendedExperience": "beginner",
+    "recommendedGoal": "hypertrophy"
+  },
+  {
+    "name": "Incline Dumbbell Press",
+    "slug": "incline-dumbbell-press",
+    "primaryMuscle": "upper_chest",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["front_deltoids", "triceps"],
+    "equipment": "dumbbell",
+    "exerciseType": "hypertrophy",
+    "difficulty": "intermediate",
+    "instructions": [
+      "Sit on a 30-to-45-degree incline bench with dumbbells resting on your thighs.",
+      "Lie back and bring the dumbbells up to shoulder level with elbows bent.",
+      "Press the dumbbells straight up over your upper chest until your arms are extended.",
+      "Lower the weights slowly back to the starting position."
+    ],
+    "tips": [
+      "Keep your shoulders pressed back and down.",
+      "Control the dumbbells on the way down to get a deep, active stretch on the upper clavicular chest fibers."
+    ],
+    "isCompound": true,
+    "isMachine": false,
+    "isBodyweight": false,
+    "recommendedExperience": "intermediate",
+    "recommendedGoal": "hypertrophy"
+  },
+  {
+    "name": "Decline Dumbbell Press",
+    "slug": "decline-dumbbell-press",
+    "primaryMuscle": "lower_chest",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["triceps", "front_deltoids"],
+    "equipment": "dumbbell",
+    "exerciseType": "hypertrophy",
+    "difficulty": "advanced",
+    "instructions": [
+      "Secure your legs under the support rollers of a decline bench.",
+      "Lie back with a dumbbell in each hand and bring them to chest level.",
+      "Press the dumbbells straight up, keeping your palms facing forward.",
+      "Lower the weights slowly back to the starting position."
+    ],
+    "tips": [
+      "Concentrate on using your lower chest to drive the weight up.",
+      "Be careful when racking/unracking dumbbells in a decline position."
+    ],
+    "isCompound": true,
+    "isMachine": false,
+    "isBodyweight": false,
+    "recommendedExperience": "advanced",
+    "recommendedGoal": "hypertrophy"
+  },
+  {
+    "name": "Dumbbell Fly",
+    "slug": "dumbbell-fly",
+    "primaryMuscle": "pectorals",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["front_deltoids"],
+    "equipment": "dumbbell",
+    "exerciseType": "hypertrophy",
+    "difficulty": "intermediate",
+    "instructions": [
+      "Lie flat on a bench with a dumbbell in each hand directly over your chest, palms facing each other.",
+      "With a slight bend in your elbows, lower your arms out to the sides in a wide arc until you feel a stretch in your chest.",
+      "Use your chest muscles to reverse the movement and return the dumbbells to the starting position."
+    ],
+    "tips": [
+      "Do not bend your elbows too much; this is a fly, not a press.",
+      "Do not lower the weights past the level of the bench to avoid shoulder strain."
+    ],
+    "isCompound": false,
+    "isMachine": false,
+    "isBodyweight": false,
+    "recommendedExperience": "intermediate",
+    "recommendedGoal": "hypertrophy"
+  },
+  {
+    "name": "Incline Dumbbell Fly",
+    "slug": "incline-dumbbell-fly",
+    "primaryMuscle": "upper_chest",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["front_deltoids"],
+    "equipment": "dumbbell",
+    "exerciseType": "hypertrophy",
+    "difficulty": "intermediate",
+    "instructions": [
+      "Lie on an incline bench set to 30 degrees with dumbbells held straight over your chest, palms facing each other.",
+      "Keeping a slight bend in your elbows, lower your arms out to the sides in a wide arc.",
+      "Squeeze your chest muscles to pull the weights back to the top."
+    ],
+    "tips": [
+      "Focus on the stretch at the bottom of the movement.",
+      "Ensure you keep your shoulders pinned back against the bench."
+    ],
+    "isCompound": false,
+    "isMachine": false,
+    "isBodyweight": false,
+    "recommendedExperience": "intermediate",
+    "recommendedGoal": "hypertrophy"
+  },
+  {
+    "name": "Cable Crossover",
+    "slug": "cable-crossover",
+    "primaryMuscle": "pectorals",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["front_deltoids"],
+    "equipment": "cable",
+    "exerciseType": "hypertrophy",
+    "difficulty": "intermediate",
+    "instructions": [
+      "Set the pulleys on a cable machine to the high position.",
+      "Hold the handles, take a step forward between the pulleys, and lean slightly forward.",
+      "With elbows slightly bent, sweep your arms downward and inward in a wide arc until your hands meet in front of your hips.",
+      "Slowly return your arms to the starting position under control."
+    ],
+    "tips": [
+      "Squeeze your chest muscles hard at the peak contraction.",
+      "Keep your posture stable and avoid using momentum to swing the weight."
+    ],
+    "isCompound": false,
+    "isMachine": false,
+    "isBodyweight": false,
+    "recommendedExperience": "intermediate",
+    "recommendedGoal": "hypertrophy"
+  },
+  {
+    "name": "Pec Deck Fly",
+    "slug": "pec-deck-fly",
+    "primaryMuscle": "pectorals",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["front_deltoids"],
+    "equipment": "machine",
+    "exerciseType": "hypertrophy",
+    "difficulty": "beginner",
+    "instructions": [
+      "Adjust the seat of the machine so that the handles are at chest level when seated.",
+      "Sit back against the pad, grab the handles, and bend your elbows slightly.",
+      "Pull the handles together in front of your chest, squeezing your chest at the top.",
+      "Slowly return to the starting position until you feel a good stretch."
+    ],
+    "tips": [
+      "Keep your back and shoulder blades flat against the backrest.",
+      "Focus on driving your elbows together rather than just your hands."
+    ],
+    "isCompound": false,
+    "isMachine": true,
+    "isBodyweight": false,
+    "recommendedExperience": "beginner",
+    "recommendedGoal": "hypertrophy"
+  },
+  {
+    "name": "Push-Up",
+    "slug": "push-up",
+    "primaryMuscle": "pectorals",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["triceps", "front_deltoids", "abs"],
+    "equipment": "bodyweight",
+    "exerciseType": "endurance",
+    "difficulty": "beginner",
+    "instructions": [
+      "Get into a plank position with hands slightly wider than shoulder-width, feet together.",
+      "Keep your body in a straight line from head to heels.",
+      "Lower your body until your chest nearly touches the floor, keeping your elbows tucked at a 45-degree angle.",
+      "Push back up to the starting position by extending your arms."
+    ],
+    "tips": [
+      "Do not let your hips sag or your lower back arch.",
+      "Keep your neck neutral by looking slightly ahead of you on the floor."
+    ],
+    "isCompound": true,
+    "isMachine": false,
+    "isBodyweight": true,
+    "recommendedExperience": "beginner",
+    "recommendedGoal": "endurance"
+  },
+  {
+    "name": "Decline Push-Up",
+    "slug": "decline-push-up",
+    "primaryMuscle": "upper_chest",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["front_deltoids", "triceps", "abs"],
+    "equipment": "bodyweight",
+    "exerciseType": "endurance",
+    "difficulty": "intermediate",
+    "instructions": [
+      "Place your feet on a bench, step, or elevated surface.",
+      "Place your hands on the floor slightly wider than shoulder-width apart.",
+      "Lower your body until your chest almost touches the floor.",
+      "Push back up to the starting position."
+    ],
+    "tips": [
+      "The higher the elevation of your feet, the harder the exercise becomes and the more it targets the upper chest.",
+      "Maintain a strong core throughout the exercise."
+    ],
+    "isCompound": true,
+    "isMachine": false,
+    "isBodyweight": true,
+    "recommendedExperience": "intermediate",
+    "recommendedGoal": "endurance"
+  },
+  {
+    "name": "Incline Push-Up",
+    "slug": "incline-push-up",
+    "primaryMuscle": "lower_chest",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["triceps", "front_deltoids", "abs"],
+    "equipment": "bodyweight",
+    "exerciseType": "endurance",
+    "difficulty": "beginner",
+    "instructions": [
+      "Place your hands on an elevated surface (like a bench or box) slightly wider than shoulder-width.",
+      "Step your feet back so your body is in a straight line.",
+      "Lower your chest down to the edge of the elevated surface.",
+      "Push back up to the starting position."
+    ],
+    "tips": [
+      "This is an excellent progression for beginners who cannot do standard pushups yet.",
+      "Ensure the elevated surface is stable and won't slide."
+    ],
+    "isCompound": true,
+    "isMachine": false,
+    "isBodyweight": true,
+    "recommendedExperience": "beginner",
+    "recommendedGoal": "endurance"
+  },
+  {
+    "name": "Chest Dip",
+    "slug": "chest-dip",
+    "primaryMuscle": "lower_chest",
+    "muscleGroup": "chest",
+    "secondaryMuscles": ["triceps", "front_deltoids"],
+    "equipment": "dip_bars",
+    "exerciseType": "strength",
+    "difficulty": "advanced",
+    "instructions": [
+      "Grab the dip bars and push yourself up to the starting position with arms extended.",
+      "Lean your torso forward slightly and bend your knees.",
+      "Lower your body by bending your elbows until your shoulders are slightly below your elbows.",
+      "Press back up to the starting position, squeezing your chest."
+    ],
+    "tips": [
+      "Leaning forward targets the chest; keeping the body upright targets the triceps.",
+      "Control the descent to avoid unnecessary shoulder joint stress.",
+      "Avoid locking out the elbows at the top."
+    ],
+    "isCompound": true,
+    "isMachine": false,
+    "isBodyweight": true,
+    "recommendedExperience": "advanced",
+    "recommendedGoal": "strength"
+  }
+]

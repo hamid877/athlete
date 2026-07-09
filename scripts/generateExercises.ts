@@ -1,0 +1,3927 @@
+import fs from "fs";
+import path from "path";
+
+/* ─── Validation Arrays ──────────────────────────────────────── */
+const MUSCLE_GROUPS = [
+  "chest",
+  "back",
+  "shoulders",
+  "arms",
+  "core",
+  "legs",
+  "glutes",
+  "calves",
+  "full_body",
+  "cardio",
+];
+
+const PRIMARY_MUSCLES = [
+  "pectorals",
+  "upper_chest",
+  "lower_chest",
+  "latissimus_dorsi",
+  "rhomboids",
+  "trapezius",
+  "rear_deltoids",
+  "front_deltoids",
+  "lateral_deltoids",
+  "biceps",
+  "triceps",
+  "forearms",
+  "abs",
+  "obliques",
+  "lower_back",
+  "hip_flexors",
+  "quadriceps",
+  "hamstrings",
+  "glutes",
+  "adductors",
+  "abductors",
+  "calves",
+  "tibialis_anterior",
+  "full_body",
+];
+
+const EQUIPMENT = [
+  "barbell",
+  "dumbbell",
+  "cable",
+  "machine",
+  "bodyweight",
+  "kettlebell",
+  "resistance_band",
+  "smith_machine",
+  "trap_bar",
+  "ez_bar",
+  "pull_up_bar",
+  "dip_bars",
+  "rings",
+  "medicine_ball",
+  "foam_roller",
+  "suspension",
+  "cardio_machine",
+  "other",
+];
+
+const EXERCISE_TYPES = [
+  "strength",
+  "hypertrophy",
+  "endurance",
+  "power",
+  "mobility",
+  "stability",
+  "cardio",
+  "plyometric",
+  "stretching",
+];
+
+const DIFFICULTY = ["beginner", "intermediate", "advanced", "expert"];
+const RECOMMENDED_EXPERIENCE = ["beginner", "intermediate", "advanced", "all"];
+const RECOMMENDED_GOAL = [
+  "strength",
+  "hypertrophy",
+  "fat_loss",
+  "endurance",
+  "general_fitness",
+  "rehabilitation",
+  "sport_performance",
+  "all",
+];
+
+interface RawExercise {
+  name: string;
+  slug: string;
+  primaryMuscle: string;
+  muscleGroup: string;
+  secondaryMuscles: string[];
+  equipment: string;
+  exerciseType: string;
+  difficulty: string;
+  instructions: string[];
+  tips: string[];
+  isCompound: boolean;
+  isMachine: boolean;
+  isBodyweight: boolean;
+  recommendedExperience: string;
+  recommendedGoal: string;
+}
+
+// Chest exercises from data/exercises.json (existing 14)
+const chestExercises: RawExercise[] = [
+  {
+    name: "Barbell Bench Press",
+    slug: "barbell-bench-press",
+    primaryMuscle: "pectorals",
+    muscleGroup: "chest",
+    secondaryMuscles: ["triceps", "front_deltoids"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Lie flat on the bench with your feet flat on the floor.",
+      "Grip the barbell with hands slightly wider than shoulder-width apart.",
+      "Unrack the barbell and hold it directly over your chest with arms fully extended.",
+      "Lower the bar slowly to your mid-chest while keeping your elbows at roughly a 45-degree angle.",
+      "Push the bar back up powerfully to the starting position, extending your arms fully but not locking your elbows."
+    ],
+    tips: [
+      "Keep your shoulder blades retracted and pressed into the bench throughout the lift.",
+      "Avoid bouncing the bar off your chest.",
+      "Ensure your feet remain planted firmly on the floor to maintain stability."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Incline Barbell Bench Press",
+    slug: "incline-barbell-bench-press",
+    primaryMuscle: "upper_chest",
+    muscleGroup: "chest",
+    secondaryMuscles: ["front_deltoids", "triceps"],
+    equipment: "barbell",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Set an incline bench to an angle of 30 to 45 degrees.",
+      "Lie on the bench and position your feet flat on the floor.",
+      "Grip the barbell with a medium-wide grip.",
+      "Unrack the bar and hold it straight above your upper chest.",
+      "Lower the bar under control until it lightly touches your upper chest.",
+      "Press the bar back up in a slight arc to the starting position."
+    ],
+    tips: [
+      "Do not use too steep of an angle, or the shoulders will dominate the lift.",
+      "Keep your wrists stacked directly over your elbows.",
+      "Retract your scapula to protect your shoulders."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Decline Barbell Bench Press",
+    slug: "decline-barbell-bench-press",
+    primaryMuscle: "lower_chest",
+    muscleGroup: "chest",
+    secondaryMuscles: ["triceps", "front_deltoids"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "advanced",
+    instructions: [
+      "Secure your feet under the pads of a decline bench under a 15-to-30-degree decline.",
+      "Lie down on the bench and grip the bar slightly wider than shoulder-width.",
+      "Unrack the bar and hold it straight over your lower chest.",
+      "Lower the bar slowly to your lower sternum.",
+      "Push the bar back up to the starting position with control."
+    ],
+    tips: [
+      "Avoid letting the bar drift too far forward towards your stomach.",
+      "Ensure you have a spotter or safety pins as rack clearance can be tricky on decline.",
+      "Control the descent to protect your rib cage."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Flat Dumbbell Press",
+    slug: "flat-dumbbell-press",
+    primaryMuscle: "pectorals",
+    muscleGroup: "chest",
+    secondaryMuscles: ["triceps", "front_deltoids"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit on the edge of a flat bench with a dumbbell in each hand resting on your knees.",
+      "Lie back on the bench, bringing the dumbbells to the sides of your chest with elbows bent at 90 degrees.",
+      "Press the dumbbells straight up over your chest until your arms are fully extended.",
+      "Lower the weights slowly and under control to the sides of your chest."
+    ],
+    tips: [
+      "Maintain a neutral wrist position throughout the movement.",
+      "Do not clank the dumbbells together at the top of the movement.",
+      "Dumbbells allow for a deeper range of motion; use this to stretch the chest safely."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Incline Dumbbell Press",
+    slug: "incline-dumbbell-press",
+    primaryMuscle: "upper_chest",
+    muscleGroup: "chest",
+    secondaryMuscles: ["front_deltoids", "triceps"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Sit on a 30-to-45-degree incline bench with dumbbells resting on your thighs.",
+      "Lie back and bring the dumbbells up to shoulder level with elbows bent.",
+      "Press the dumbbells straight up over your upper chest until your arms are extended.",
+      "Lower the weights slowly back to the starting position."
+    ],
+    tips: [
+      "Keep your shoulders pressed back and down.",
+      "Control the dumbbells on the way down to get a deep, active stretch on the upper clavicular chest fibers."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Decline Dumbbell Press",
+    slug: "decline-dumbbell-press",
+    primaryMuscle: "lower_chest",
+    muscleGroup: "chest",
+    secondaryMuscles: ["triceps", "front_deltoids"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "advanced",
+    instructions: [
+      "Secure your legs under the support rollers of a decline bench.",
+      "Lie back with a dumbbell in each hand and bring them to chest level.",
+      "Press the dumbbells straight up, keeping your palms facing forward.",
+      "Lower the weights slowly back to the starting position."
+    ],
+    tips: [
+      "Concentrate on using your lower chest to drive the weight up.",
+      "Be careful when racking/unracking dumbbells in a decline position."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Dumbbell Fly",
+    slug: "dumbbell-fly",
+    primaryMuscle: "pectorals",
+    muscleGroup: "chest",
+    secondaryMuscles: ["front_deltoids"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Lie flat on a bench with a dumbbell in each hand directly over your chest, palms facing each other.",
+      "With a slight bend in your elbows, lower your arms out to the sides in a wide arc until you feel a stretch in your chest.",
+      "Use your chest muscles to reverse the movement and return the dumbbells to the starting position."
+    ],
+    tips: [
+      "Do not bend your elbows too much; this is a fly, not a press.",
+      "Do not lower the weights past the level of the bench to avoid shoulder strain."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Incline Dumbbell Fly",
+    slug: "incline-dumbbell-fly",
+    primaryMuscle: "upper_chest",
+    muscleGroup: "chest",
+    secondaryMuscles: ["front_deltoids"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Lie on an incline bench set to 30 degrees with dumbbells held straight over your chest, palms facing each other.",
+      "Keeping a slight bend in your elbows, lower your arms out to the sides in a wide arc.",
+      "Squeeze your chest muscles to pull the weights back to the top."
+    ],
+    tips: [
+      "Focus on the stretch at the bottom of the movement.",
+      "Ensure you keep your shoulders pinned back against the bench."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Cable Crossover",
+    slug: "cable-crossover",
+    primaryMuscle: "pectorals",
+    muscleGroup: "chest",
+    secondaryMuscles: ["front_deltoids"],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Set the pulleys on a cable machine to the high position.",
+      "Hold the handles, take a step forward between the pulleys, and lean slightly forward.",
+      "With elbows slightly bent, sweep your arms downward and inward in a wide arc until your hands meet in front of your hips.",
+      "Slowly return your arms to the starting position under control."
+    ],
+    tips: [
+      "Squeeze your chest muscles hard at the peak contraction.",
+      "Keep your posture stable and avoid using momentum to swing the weight."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Pec Deck Fly",
+    slug: "pec-deck-fly",
+    primaryMuscle: "pectorals",
+    muscleGroup: "chest",
+    secondaryMuscles: ["front_deltoids"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Adjust the seat of the machine so that the handles are at chest level when seated.",
+      "Sit back against the pad, grab the handles, and bend your elbows slightly.",
+      "Pull the handles together in front of your chest, squeezing your chest at the top.",
+      "Slowly return to the starting position until you feel a good stretch."
+    ],
+    tips: [
+      "Keep your back and shoulder blades flat against the backrest.",
+      "Focus on driving your elbows together rather than just your hands."
+    ],
+    isCompound: false,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Push-Up",
+    slug: "push-up",
+    primaryMuscle: "pectorals",
+    muscleGroup: "chest",
+    secondaryMuscles: ["triceps", "front_deltoids", "abs"],
+    equipment: "bodyweight",
+    exerciseType: "endurance",
+    difficulty: "beginner",
+    instructions: [
+      "Get into a plank position with hands slightly wider than shoulder-width, feet together.",
+      "Keep your body in a straight line from head to heels.",
+      "Lower your body until your chest nearly touches the floor, keeping your elbows tucked at a 45-degree angle.",
+      "Push back up to the starting position by extending your arms."
+    ],
+    tips: [
+      "Do not let your hips sag or your lower back arch.",
+      "Keep your neck neutral by looking slightly ahead of you on the floor."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Decline Push-Up",
+    slug: "decline-push-up",
+    primaryMuscle: "upper_chest",
+    muscleGroup: "chest",
+    secondaryMuscles: ["front_deltoids", "triceps", "abs"],
+    equipment: "bodyweight",
+    exerciseType: "endurance",
+    difficulty: "intermediate",
+    instructions: [
+      "Place your feet on a bench, step, or elevated surface.",
+      "Place your hands on the floor slightly wider than shoulder-width apart.",
+      "Lower your body until your chest almost touches the floor.",
+      "Push back up to the starting position."
+    ],
+    tips: [
+      "The higher the elevation of your feet, the harder the exercise becomes and the more it targets the upper chest.",
+      "Maintain a strong core throughout the exercise."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Incline Push-Up",
+    slug: "incline-push-up",
+    primaryMuscle: "lower_chest",
+    muscleGroup: "chest",
+    secondaryMuscles: ["triceps", "front_deltoids", "abs"],
+    equipment: "bodyweight",
+    exerciseType: "endurance",
+    difficulty: "beginner",
+    instructions: [
+      "Place your hands on an elevated surface (like a bench or box) slightly wider than shoulder-width.",
+      "Step your feet back so your body is in a straight line.",
+      "Lower your chest down to the edge of the elevated surface.",
+      "Push back up to the starting position."
+    ],
+    tips: [
+      "This is an excellent progression for beginners who cannot do standard pushups yet.",
+      "Ensure the elevated surface is stable and won't slide."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Chest Dip",
+    slug: "chest-dip",
+    primaryMuscle: "lower_chest",
+    muscleGroup: "chest",
+    secondaryMuscles: ["triceps", "front_deltoids"],
+    equipment: "dip_bars",
+    exerciseType: "strength",
+    difficulty: "advanced",
+    instructions: [
+      "Grab the dip bars and push yourself up to the starting position with arms extended.",
+      "Lean your torso forward slightly and bend your knees.",
+      "Lower your body by bending your elbows until your shoulders are slightly below your elbows.",
+      "Press back up to the starting position, squeezing your chest."
+    ],
+    tips: [
+      "Leaning forward targets the chest; keeping the body upright targets the triceps.",
+      "Control the descent to avoid unnecessary shoulder joint stress.",
+      "Avoid locking out the elbows at the top."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "advanced",
+    recommendedGoal: "strength"
+  }
+];
+
+// Additional Chest exercises (6 to reach 20)
+const additionalChestExercises: RawExercise[] = [
+  {
+    name: "Dumbbell Pullover",
+    slug: "dumbbell-pullover",
+    primaryMuscle: "pectorals",
+    muscleGroup: "chest",
+    secondaryMuscles: ["latissimus_dorsi", "triceps"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Lie across a flat bench with only your upper back supporting your weight, hips slightly lower than the bench.",
+      "Hold a dumbbell with both hands directly above your chest, arms nearly straight.",
+      "Slowly lower the dumbbell backward over your head in an arc until you feel a deep stretch in your chest and lats.",
+      "Pull the dumbbell back up to the starting position, squeezing your chest at the top."
+    ],
+    tips: [
+      "Keep your hips low to maintain tension across the torso.",
+      "Perform the movement slowly to avoid shoulder strain.",
+      "Focus on the contraction of the chest rather than the pull of the lats."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Machine Chest Press",
+    slug: "machine-chest-press",
+    primaryMuscle: "pectorals",
+    muscleGroup: "chest",
+    secondaryMuscles: ["triceps", "front_deltoids"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Adjust the seat height so that the handles align with your mid-to-lower chest.",
+      "Sit back against the pad, feet flat on the floor, and grip the handles.",
+      "Press the handles forward until your arms are fully extended but not locked.",
+      "Slowly return the handles back to the starting position, allowing a deep stretch in your chest."
+    ],
+    tips: [
+      "Keep your chest proud and your shoulders pinned back against the seat pad.",
+      "Control the eccentric phase to maximize muscle fibers recruitment."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Incline Cable Fly",
+    slug: "incline-cable-fly",
+    primaryMuscle: "upper_chest",
+    muscleGroup: "chest",
+    secondaryMuscles: ["front_deltoids"],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Place an incline bench (set to 30 degrees) between two low cable pulleys.",
+      "Grasp the handles, lie back on the bench, and start with arms extended out to the sides.",
+      "Bring your hands together over your upper chest in a wide arc, flexing your chest muscles.",
+      "Slowly reverse the motion back to the start under complete control."
+    ],
+    tips: [
+      "Cables provide constant tension at the top of the movement compared to dumbbells.",
+      "Ensure a soft bend in the elbows to protect the joints."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Weighted Push-Up",
+    slug: "weighted-push-up",
+    primaryMuscle: "pectorals",
+    muscleGroup: "chest",
+    secondaryMuscles: ["triceps", "front_deltoids", "abs"],
+    equipment: "bodyweight",
+    exerciseType: "strength",
+    difficulty: "advanced",
+    instructions: [
+      "Place a weight plate on your upper back (or use a weighted vest).",
+      "Get into a standard plank position with hands slightly wider than shoulder-width.",
+      "Lower your chest to the floor keeping your body in a straight line.",
+      "Press yourself back up to the top with control."
+    ],
+    tips: [
+      "Ensure the plate is placed safely and does not slide towards your neck.",
+      "Maintain a very strong core brace to prevent your hips from sagging."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "advanced",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Guillotine Press",
+    slug: "guillotine-press",
+    primaryMuscle: "upper_chest",
+    muscleGroup: "chest",
+    secondaryMuscles: ["front_deltoids", "triceps"],
+    equipment: "barbell",
+    exerciseType: "hypertrophy",
+    difficulty: "expert",
+    instructions: [
+      "Lie on a flat bench and grip the barbell with a wider-than-normal grip.",
+      "Unrack the bar and hold it directly over your upper neck/throat.",
+      "Lower the bar slowly to your upper chest near the collarbone, flaring your elbows out.",
+      "Press the bar back up to the starting position without locking out."
+    ],
+    tips: [
+      "Use a lighter weight as this puts the shoulders in a vulnerable position.",
+      "Perform with a spotter or in a power rack with safety arms.",
+      "Excellent for isolating upper chest but requires perfect control."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Landmine Chest Press",
+    slug: "landmine-chest-press",
+    primaryMuscle: "upper_chest",
+    muscleGroup: "chest",
+    secondaryMuscles: ["front_deltoids", "triceps"],
+    equipment: "barbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand facing a landmine barbell setup.",
+      "Hold the sleeve of the barbell with both hands pressed together at chest height.",
+      "Press the bar upward and forward until your arms are fully extended.",
+      "Lower the bar back to the starting position under control."
+    ],
+    tips: [
+      "Squeeze your hands together tightly to increase inner chest activation.",
+      "Lean slightly forward into the press."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  }
+];
+
+// Back exercises (22)
+const backExercises: RawExercise[] = [
+  {
+    name: "Barbell Deadlift",
+    slug: "barbell-deadlift",
+    primaryMuscle: "lower_back",
+    muscleGroup: "back",
+    secondaryMuscles: ["glutes", "hamstrings", "trapezius", "forearms"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Stand with feet hip-width apart, shins about an inch from the bar.",
+      "Hinge at your hips and bend your knees to grip the bar with a shoulder-width grip.",
+      "Flatten your back, pull your chest up, and pull your shoulder blades down to engage your lats.",
+      "Drive through your legs to lift the barbell off the floor, keeping the bar close to your body.",
+      "Stand up tall, locking out your hips and knees, then reverse the movement to lower the bar."
+    ],
+    tips: [
+      "Do not round your spine at any point during the lift.",
+      "Keep the bar in contact with your legs to reduce strain on the lower back.",
+      "Brace your core as if you are about to be punched."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Pull-Up",
+    slug: "pull-up",
+    primaryMuscle: "latissimus_dorsi",
+    muscleGroup: "back",
+    secondaryMuscles: ["biceps", "rhomboids", "trapezius"],
+    equipment: "pull_up_bar",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Grip the pull-up bar with an overhand grip, hands slightly wider than shoulder-width.",
+      "Hang with arms fully extended, core engaged.",
+      "Pull your shoulder blades down and back, then pull your chest up towards the bar.",
+      "Continue pulling until your chin is over the bar.",
+      "Slowly lower yourself back to the starting dead-hang position."
+    ],
+    tips: [
+      "Avoid using momentum or swinging your legs (kipping) unless doing specialized training.",
+      "Keep your shoulders active; do not let your ears sink into your shoulders at the bottom.",
+      "Focus on pulling through your elbows rather than your hands."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Chin-Up",
+    slug: "chin-up",
+    primaryMuscle: "latissimus_dorsi",
+    muscleGroup: "back",
+    secondaryMuscles: ["biceps", "rhomboids", "forearms"],
+    equipment: "pull_up_bar",
+    exerciseType: "strength",
+    difficulty: "beginner",
+    instructions: [
+      "Grip the pull-up bar with an underhand (supinated) grip, hands shoulder-width apart.",
+      "Start from a full dead-hang position.",
+      "Engage your lats and biceps to pull your body upward until your chin clears the bar.",
+      "Slowly lower your body back to the starting position."
+    ],
+    tips: [
+      "This variation heavily recruits the biceps alongside the lats.",
+      "Ensure you go through the full range of motion for best results."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Lat Pulldown",
+    slug: "lat-pulldown",
+    primaryMuscle: "latissimus_dorsi",
+    muscleGroup: "back",
+    secondaryMuscles: ["biceps", "rhomboids", "forearms"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit at the lat pulldown station and adjust the knee pads so you are locked in.",
+      "Grasp the bar with a wide overhand grip.",
+      "Lean back slightly (about 10-15 degrees) and pull the bar down to your upper chest.",
+      "Squeeze your lats at the bottom, then slowly return the bar to the starting position."
+    ],
+    tips: [
+      "Do not pull the bar down behind your neck as it can injure the shoulder joint.",
+      "Keep your chest up and shoulders pulled back throughout the movement."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Close-Grip Lat Pulldown",
+    slug: "close-grip-lat-pulldown",
+    primaryMuscle: "latissimus_dorsi",
+    muscleGroup: "back",
+    secondaryMuscles: ["biceps", "rhomboids", "forearms"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Attach a close-grip V-bar attachment to the lat pulldown machine.",
+      "Sit down and secure your knees under the pads, holding the V-bar with palms facing each other.",
+      "Pull the attachment down toward your collarbone while leaning back slightly.",
+      "Slowly let the attachment return to the starting position."
+    ],
+    tips: [
+      "Squeeze your shoulder blades together at the bottom.",
+      "Allows for a greater stretch at the top of the range of motion."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Barbell Row",
+    slug: "barbell-row",
+    primaryMuscle: "latissimus_dorsi",
+    muscleGroup: "back",
+    secondaryMuscles: ["rhomboids", "biceps", "lower_back", "rear_deltoids"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Hold a barbell with a shoulder-width overhand grip.",
+      "Hinge forward at your hips, keeping your back straight and knees slightly bent, until your torso is almost parallel to the floor.",
+      "Pull the barbell toward your lower ribs, keeping your elbows tucked close to your body.",
+      "Squeeze your shoulder blades together at the top, then slowly lower the bar back down."
+    ],
+    tips: [
+      "Do not lift your torso up to move the weight; keep your hinge constant.",
+      "Avoid rounding your lower back; keep it flat or slightly arched."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "One-Arm Dumbbell Row",
+    slug: "one-arm-dumbbell-row",
+    primaryMuscle: "latissimus_dorsi",
+    muscleGroup: "back",
+    secondaryMuscles: ["rhomboids", "biceps", "rear_deltoids", "forearms"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Place your left knee and left hand flat on a bench, keeping your torso parallel to the floor.",
+      "Hold a dumbbell in your right hand with your arm extended toward the floor.",
+      "Row the dumbbell up to your hip, keeping your elbow tucked close to your side.",
+      "Lower the weight back to the starting position with control."
+    ],
+    tips: [
+      "Pull with your elbow rather than your wrist.",
+      "Ensure you don't rotate your torso excessively at the top of the row."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "T-Bar Row",
+    slug: "t-bar-row",
+    primaryMuscle: "latissimus_dorsi",
+    muscleGroup: "back",
+    secondaryMuscles: ["rhomboids", "biceps", "lower_back", "trapezius"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Step onto the T-Bar row machine platform and position your feet shoulder-width apart.",
+      "Bend at the hips and grasp the handles with an overhand or neutral grip.",
+      "Keep your back flat and pull the handles toward your upper abdomen.",
+      "Lower the weight slowly to the starting position."
+    ],
+    tips: [
+      "Keep your head neutral and your chest supported if the machine has a pad.",
+      "Avoid using leg drive to lift the weight."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Seated Cable Row",
+    slug: "seated-cable-row",
+    primaryMuscle: "rhomboids",
+    muscleGroup: "back",
+    secondaryMuscles: ["latissimus_dorsi", "biceps", "trapezius", "forearms"],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit at a cable row station with your feet on the platforms and knees slightly bent.",
+      "Grasp the double-D handle and sit back with arms extended, keeping your back flat.",
+      "Pull the handle to your abdomen, squeezing your shoulder blades together.",
+      "Slowly return the handle to the start position, stretching your lats."
+    ],
+    tips: [
+      "Avoid rocking back and forth; keep your torso relatively upright and still.",
+      "Lead the movement by retracting your shoulders."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Chest-Supported Dumbbell Row",
+    slug: "chest-supported-dumbbell-row",
+    primaryMuscle: "rhomboids",
+    muscleGroup: "back",
+    secondaryMuscles: ["latissimus_dorsi", "biceps", "rear_deltoids"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Set an incline bench to about 30 degrees.",
+      "Lie face down on the bench with your chest resting against the backrest.",
+      "Hold a dumbbell in each hand, arms hanging down.",
+      "Row the dumbbells up toward your ribs, squeezing your shoulder blades at the top.",
+      "Lower the weights slowly back to the starting position."
+    ],
+    tips: [
+      "This variation removes lower back fatigue entirely, making it excellent for upper back hypertrophy.",
+      "Do not lift your chest off the pad."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Inverted Row",
+    slug: "inverted-row",
+    primaryMuscle: "rhomboids",
+    muscleGroup: "back",
+    secondaryMuscles: ["biceps", "latissimus_dorsi", "core"],
+    equipment: "bodyweight",
+    exerciseType: "endurance",
+    difficulty: "beginner",
+    instructions: [
+      "Set a barbell in a smith machine or rack at waist height.",
+      "Lie underneath the bar and grip it overhand, slightly wider than shoulder-width.",
+      "Extend your legs out and hang under the bar, keeping your body in a straight line.",
+      "Pull your chest up to the bar, squeezing your shoulder blades together.",
+      "Lower yourself back down with control."
+    ],
+    tips: [
+      "To make it easier, bend your knees and place your feet flat on the floor.",
+      "Ensure your core is locked and hips do not sag."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Straight-Arm Lat Pulldown",
+    slug: "straight-arm-lat-pulldown",
+    primaryMuscle: "latissimus_dorsi",
+    muscleGroup: "back",
+    secondaryMuscles: ["triceps", "rear_deltoids"],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Stand facing a cable pulley machine with a straight bar attached to the high setting.",
+      "Grasp the bar with an overhand grip, step back, and bend your knees slightly, leaning forward.",
+      "With arms straight (soft elbow bend), pull the bar down to your thighs using your lats.",
+      "Slowly return the bar to the starting position under control."
+    ],
+    tips: [
+      "Focus entirely on your lats pulling the bar down; don't push with your triceps.",
+      "Excellent isolation exercise for the lats."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Dumbbell Shrug",
+    slug: "dumbbell-shrug",
+    primaryMuscle: "trapezius",
+    muscleGroup: "back",
+    secondaryMuscles: ["forearms"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand upright holding a dumbbell in each hand at your sides.",
+      "Keep your arms straight and elevate your shoulders as high as possible toward your ears.",
+      "Hold the contraction for a second, then slowly lower the shoulders back down."
+    ],
+    tips: [
+      "Do not roll your shoulders in a circle; lift them straight up and down.",
+      "Keep your neck neutral; don't push your chin forward."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Barbell Shrug",
+    slug: "barbell-shrug",
+    primaryMuscle: "trapezius",
+    muscleGroup: "back",
+    secondaryMuscles: ["forearms"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "beginner",
+    instructions: [
+      "Hold a barbell in front of your thighs with an overhand grip.",
+      "Keep your arms fully extended and lift your shoulders up toward your ears.",
+      "Pause at the top, then slowly return to the starting position."
+    ],
+    tips: [
+      "Use straps if your grip limit prevents you from overloading your traps.",
+      "Keep the core braced and stand upright."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Back Extension",
+    slug: "back-extension",
+    primaryMuscle: "lower_back",
+    muscleGroup: "back",
+    secondaryMuscles: ["glutes", "hamstrings"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Position yourself in the back extension bench so that your hips are resting on the upper pad.",
+      "Cross your arms over your chest and lower your torso toward the floor by bending at the hips.",
+      "Raise your torso until your body is in a straight line, squeezing your lower back and glutes.",
+      "Slowly lower yourself back down."
+    ],
+    tips: [
+      "Do not hyperextend or arch your back excessively at the top of the movement.",
+      "Hold a weight plate against your chest for added resistance."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Rack Pull",
+    slug: "rack-pull",
+    primaryMuscle: "lower_back",
+    muscleGroup: "back",
+    secondaryMuscles: ["trapezius", "glutes", "forearms", "latissimus_dorsi"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Set the safety bars in a power rack to just below or above your knees.",
+      "Position a barbell on the safeties and stand with feet hip-width apart.",
+      "Hinge and grip the bar, flatten your back, and pull your shoulder blades down.",
+      "Drive through your legs and pull the bar up, locking out your hips at the top.",
+      "Return the bar to the safety pins under control."
+    ],
+    tips: [
+      "This is a deadlift variation that isolates the upper/lower back and traps by shortening the leg drive.",
+      "Ensure you maintain a flat back throughout."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Single-Arm Cable Row",
+    slug: "single-arm-cable-row",
+    primaryMuscle: "latissimus_dorsi",
+    muscleGroup: "back",
+    secondaryMuscles: ["rhomboids", "biceps", "obliques"],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Attach a single handle to a low cable pulley.",
+      "Step back, hold the handle, and place the opposite foot forward for balance.",
+      "Row the cable to your hip, rotating your palm slightly to face your body.",
+      "Slowly let the cable pull your arm forward to stretch the lat."
+    ],
+    tips: [
+      "Allows for unilateral development and correction of back imbalances.",
+      "Brace your core to keep your torso from twisting."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Pendlay Row",
+    slug: "pendlay-row",
+    primaryMuscle: "latissimus_dorsi",
+    muscleGroup: "back",
+    secondaryMuscles: ["rhomboids", "lower_back", "biceps", "rear_deltoids"],
+    equipment: "barbell",
+    exerciseType: "power",
+    difficulty: "advanced",
+    instructions: [
+      "Stand over a barbell with feet hip-width apart.",
+      "Bend over, keeping your back completely flat and parallel to the floor, and grip the bar overhand.",
+      "Explosively row the bar to your chest, keeping your torso still.",
+      "Lower the bar back to the floor completely before beginning the next repetition."
+    ],
+    tips: [
+      "The bar must come to a dead stop on the floor on every rep.",
+      "Keep your knees slightly bent to relieve hamstring tension."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Meadow's Row",
+    slug: "meadows-row",
+    primaryMuscle: "rhomboids",
+    muscleGroup: "back",
+    secondaryMuscles: ["latissimus_dorsi", "rear_deltoids", "biceps", "forearms"],
+    equipment: "barbell",
+    exerciseType: "hypertrophy",
+    difficulty: "advanced",
+    instructions: [
+      "Set a barbell in a landmine setup.",
+      "Stand perpendicular to the bar, hip-hinged forward with a flat back.",
+      "Grasp the fat sleeve of the barbell with a pronated (overhand) grip.",
+      "Row the sleeve up towards your flank, flaring your elbow slightly.",
+      "Lower the bar back to the starting stretch position."
+    ],
+    tips: [
+      "Use small diameter plates (like 25 lbs) to increase the range of motion.",
+      "Brace yourself with your opposite forearm on your thigh."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Renegade Row",
+    slug: "renegade-row",
+    primaryMuscle: "rhomboids",
+    muscleGroup: "back",
+    secondaryMuscles: ["latissimus_dorsi", "abs", "shoulders", "triceps"],
+    equipment: "dumbbell",
+    exerciseType: "stability",
+    difficulty: "advanced",
+    instructions: [
+      "Get into a pushup position holding two dumbbells on the floor.",
+      "Widen your feet slightly to create a stable base.",
+      "Row one dumbbell up to your hip while balancing on the other arm and your feet.",
+      "Lower the weight back down and repeat on the opposite side."
+    ],
+    tips: [
+      "Do not rotate your hips; keep them parallel to the floor.",
+      "Brace your core intensely."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "general_fitness"
+  },
+  {
+    name: "Reverse Lat Pulldown",
+    slug: "reverse-lat-pulldown",
+    primaryMuscle: "latissimus_dorsi",
+    muscleGroup: "back",
+    secondaryMuscles: ["biceps", "rhomboids", "forearms"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit at the lat pulldown machine and adjust the pads.",
+      "Grasp the bar with an underhand (supinated) grip, shoulder-width apart.",
+      "Pull the bar down toward your lower chest while keeping your back arched slightly.",
+      "Slowly let the bar return to the top position."
+    ],
+    tips: [
+      "This grip recruits the lower lat fibers and biceps more heavily.",
+      "Keep your elbows tucked closely in front of your body."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Face Pull",
+    slug: "face-pull",
+    primaryMuscle: "rear_deltoids",
+    muscleGroup: "back",
+    secondaryMuscles: ["trapezius", "lateral_deltoids"],
+    equipment: "cable",
+    exerciseType: "stability",
+    difficulty: "beginner",
+    instructions: [
+      "Attach a rope to a cable pulley at upper chest/face height.",
+      "Grasp the rope ends with your thumbs pointing backward.",
+      "Step back and pull the center of the rope towards your nose.",
+      "As you pull, flare your elbows and pull the hands apart, rotating your thumbs backward.",
+      "Slowly return the cable to the starting position."
+    ],
+    tips: [
+      "Focus on squeezing the back of your shoulders and your upper back.",
+      "Do not use excessive weight; prioritize execution and rotation."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "general_fitness"
+  }
+];
+
+// Shoulders exercises (20)
+const shoulderExercises: RawExercise[] = [
+  {
+    name: "Overhead Barbell Press",
+    slug: "overhead-barbell-press",
+    primaryMuscle: "front_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["triceps", "lateral_deltoids", "core"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Stand with feet shoulder-width apart, holding a barbell at collarbone height with a shoulder-width grip.",
+      "Brace your core, squeeze your glutes, and push the bar straight up over your head.",
+      "Pull your head back slightly as the bar passes your face, then push your head forward once the bar clears your forehead.",
+      "Lock out your elbows at the top, then slowly lower the bar back to your chest."
+    ],
+    tips: [
+      "Do not bend your knees to help lift the weight (that is a push press).",
+      "Keep your forearms vertical under the bar at all times."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Dumbbell Shoulder Press",
+    slug: "dumbbell-shoulder-press",
+    primaryMuscle: "front_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["triceps", "lateral_deltoids"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit on a bench with a vertical back support, holding dumbbells at shoulder height with palms facing forward.",
+      "Press the weights straight up over your head until your arms are fully extended.",
+      "Slowly lower the dumbbells back to shoulder height."
+    ],
+    tips: [
+      "Ensure you don't arch your lower back off the bench.",
+      "Keep your elbows slightly tucked forward rather than flared wide to protect the shoulders."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Arnold Press",
+    slug: "arnold-press",
+    primaryMuscle: "front_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["lateral_deltoids", "triceps"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Sit on a bench holding dumbbells in front of your chest with palms facing your body (like the top of a bicep curl).",
+      "As you press the weights up, rotate your wrists so your palms face forward at the top.",
+      "Slowly lower the weights while rotating your wrists back to the starting position."
+    ],
+    tips: [
+      "Keep the rotation smooth and continuous throughout the press.",
+      "Maintains tension on the front and lateral delts over a larger range of motion."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Dumbbell Lateral Raise",
+    slug: "dumbbell-lateral-raise",
+    primaryMuscle: "lateral_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["front_deltoids", "trapezius"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding a dumbbell in each hand at your sides, torso leaning forward slightly.",
+      "With a slight bend in your elbows, raise your arms out to the sides until they are parallel to the floor.",
+      "Slowly lower the weights back to your sides."
+    ],
+    tips: [
+      "Lead the movement with your elbows, keeping your hands slightly lower than your elbows.",
+      "Do not swing the weights; control both the lift and descent."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Cable Lateral Raise",
+    slug: "cable-lateral-raise",
+    primaryMuscle: "lateral_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["front_deltoids", "trapezius"],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Stand next to a low cable pulley. Grasp the handle with the hand furthest from the machine.",
+      "Raise your arm across your body and out to the side until it is parallel to the floor.",
+      "Slowly lower the handle back in front of your waist."
+    ],
+    tips: [
+      "Cables maintain constant tension on the lateral delt even at the bottom of the movement.",
+      "Lean slightly away from the machine to increase the range of motion."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Dumbbell Front Raise",
+    slug: "dumbbell-front-raise",
+    primaryMuscle: "front_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["lateral_deltoids", "trapezius"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding a dumbbell in each hand in front of your thighs.",
+      "Keeping your arm nearly straight, raise one dumbbell directly in front of you to shoulder height.",
+      "Lower the weight slowly, then repeat with the opposite arm."
+    ],
+    tips: [
+      "Avoid rocking your torso to gain momentum.",
+      "Keep your palms facing down or facing each other."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Barbell Front Raise",
+    slug: "barbell-front-raise",
+    primaryMuscle: "front_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["lateral_deltoids", "trapezius"],
+    equipment: "barbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding a lightweight barbell in front of your hips with an overhand grip.",
+      "Raise the barbell straight up in front of you to shoulder level.",
+      "Slowly lower the barbell back to the starting position."
+    ],
+    tips: [
+      "Control the descent completely to get the full hypertrophic benefits.",
+      "Brace your core to keep your spine neutral."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Rear Delt Dumbbell Fly",
+    slug: "rear-delt-dumbbell-fly",
+    primaryMuscle: "rear_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["rhomboids", "trapezius"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Stand holding dumbbells and hinge forward at your hips until your torso is almost parallel to the floor.",
+      "With a slight bend in your elbows, raise your arms out to the sides, squeezing the back of your shoulders.",
+      "Lower the weights slowly back down."
+    ],
+    tips: [
+      "Focus on moving the dumbbells out to the walls, not pulling them up.",
+      "Keep your neck aligned with your spine by looking at the floor."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Rear Delt Cable Fly",
+    slug: "rear-delt-cable-fly",
+    primaryMuscle: "rear_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["rhomboids", "trapezius"],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Stand between two high cable pulleys, holding the opposite cable handles without attachments (right hand holds left cable, left hand holds right).",
+      "Pull your hands backward and outward in an arc, squeezing the back of your shoulders.",
+      "Slowly return your hands to the starting position, crossing them over."
+    ],
+    tips: [
+      "Keep your shoulders depressed; do not let your traps shrug the weight.",
+      "Maintain a consistent soft elbow angle."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Machine Shoulder Press",
+    slug: "machine-shoulder-press",
+    primaryMuscle: "front_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["triceps", "lateral_deltoids"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit on the machine and adjust the seat so the handles align with your shoulders.",
+      "Grasp the handles and press them straight up to full arm extension.",
+      "Lower the weight back to the starting position under control."
+    ],
+    tips: [
+      "Keep your feet flat on the floor to stabilize your torso.",
+      "Adjust en-route to ensure your elbows track comfortably without shoulder pain."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Smith Machine Overhead Press",
+    slug: "smith-machine-overhead-press",
+    primaryMuscle: "front_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["triceps", "lateral_deltoids"],
+    equipment: "smith_machine",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Place a bench inside the Smith Machine, sitting directly under the bar.",
+      "Grip the bar overhand, shoulder-width apart, and unrack it.",
+      "Lower the bar to your upper chest near the collarbone.",
+      "Press the bar back up to extension."
+    ],
+    tips: [
+      "The fixed track allows you to focus purely on pressing without balancing the bar.",
+      "Do not arch your back excessively."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Dumbbell Y-Raise",
+    slug: "dumbbell-y-raise",
+    primaryMuscle: "lateral_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["front_deltoids", "trapezius"],
+    equipment: "dumbbell",
+    exerciseType: "stability",
+    difficulty: "intermediate",
+    instructions: [
+      "Lie face down on a 45-degree incline bench with dumbbells hanging down.",
+      "Raise your arms up and outward at a 45-degree angle (forming a 'Y' shape with your body).",
+      "Squeeze your shoulders at the top, then slowly lower the weights."
+    ],
+    tips: [
+      "Keep your thumbs pointed toward the ceiling.",
+      "Keep your arms fully extended throughout the movement."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "rehabilitation"
+  },
+  {
+    name: "Upright Row",
+    slug: "upright-row",
+    primaryMuscle: "lateral_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["trapezius", "biceps", "forearms"],
+    equipment: "barbell",
+    exerciseType: "hypertrophy",
+    difficulty: "advanced",
+    instructions: [
+      "Stand holding a barbell in front of your thighs with a wide overhand grip.",
+      "Pull the barbell straight up along the front of your body toward your chest, flaring your elbows high.",
+      "Lower the barbell slowly back to the starting position."
+    ],
+    tips: [
+      "A wider grip reduces internal shoulder rotation, making it safer.",
+      "Do not pull the bar higher than chest level to prevent impingement."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Reverse Pec Deck Fly",
+    slug: "reverse-pec-deck-fly",
+    primaryMuscle: "rear_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["rhomboids", "trapezius"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit facing the backrest of the pec deck machine.",
+      "Adjust the handles so they are positioned at shoulder height when seated.",
+      "Grasp the handles, keep a soft elbow bend, and pull your arms backward in a wide arc.",
+      "Return the handles slowly to the start position."
+    ],
+    tips: [
+      "Squeeze the rear delts hard at the end of the motion.",
+      "Do not let your upper back shrug up."
+    ],
+    isCompound: false,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Push Press",
+    slug: "push-press",
+    primaryMuscle: "front_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["quadriceps", "triceps", "glutes", "core"],
+    equipment: "barbell",
+    exerciseType: "power",
+    difficulty: "advanced",
+    instructions: [
+      "Setup in the same position as the overhead press.",
+      "Dip your knees slightly (about 2-3 inches), keeping your torso completely upright.",
+      "Explosively drive through your legs to propel the barbell overhead.",
+      "Lower the bar back to your collarbone under control."
+    ],
+    tips: [
+      "Use your legs to drive the bar past your face, then lock it out with your arms.",
+      "Keep your core braced tightly during the leg drive."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "sport_performance"
+  },
+  {
+    name: "Landmine Press",
+    slug: "landmine-press",
+    primaryMuscle: "front_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["triceps", "core"],
+    equipment: "barbell",
+    exerciseType: "stability",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding the end of a landmine barbell at your shoulder with one hand.",
+      "Press the barbell forward and upward to full extension, leaning slightly into the movement.",
+      "Slowly lower the barbell back to your shoulder."
+    ],
+    tips: [
+      "Excellent shoulder-friendly alternative to traditional overhead pressing.",
+      "Engage your core to keep your body stable."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "rehabilitation"
+  },
+  {
+    name: "Dumbbell Lu Raise",
+    slug: "dumbbell-lu-raise",
+    primaryMuscle: "lateral_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["trapezius", "front_deltoids"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "advanced",
+    instructions: [
+      "Stand upright holding dumbbells in front of your thighs, palms facing forward.",
+      "Raise the dumbbells out and up in a huge circle overhead, keeping your arms straight.",
+      "Slowly lower the dumbbells back down along the same path."
+    ],
+    tips: [
+      "Allows the scapula to rotate naturally.",
+      "Use very light weights to maintain strict form."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "mobility"
+  },
+  {
+    name: "Kettlebell Press",
+    slug: "kettlebell-press",
+    primaryMuscle: "front_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["triceps", "core"],
+    equipment: "kettlebell",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Clean a kettlebell into the rack position (resting on your forearm and chest).",
+      "Press the kettlebell overhead, rotating your wrist so the palm faces forward at the top.",
+      "Lower the kettlebell back down to the rack position."
+    ],
+    tips: [
+      "The offset weight of the kettlebell requires more wrist and shoulder stability.",
+      "Keep your forearm vertical."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Dumbbell Clean and Press",
+    slug: "dumbbell-clean-and-press",
+    primaryMuscle: "front_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["glutes", "hamstrings", "triceps", "core"],
+    equipment: "dumbbell",
+    exerciseType: "power",
+    difficulty: "advanced",
+    instructions: [
+      "Hold a dumbbell in each hand, standing with feet shoulder-width apart.",
+      "Hinge forward and clean the dumbbells to shoulder height using a hip drive.",
+      "Immediately press the dumbbells overhead.",
+      "Lower the weights back to your shoulders, then to your sides."
+    ],
+    tips: [
+      "Combines a lower-body pull with an upper-body press.",
+      "Keep the weights close to your body during the clean phase."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "sport_performance"
+  },
+  {
+    name: "Behind the Neck Press",
+    slug: "behind-the-neck-press",
+    primaryMuscle: "lateral_deltoids",
+    muscleGroup: "shoulders",
+    secondaryMuscles: ["front_deltoids", "triceps", "trapezius"],
+    equipment: "barbell",
+    exerciseType: "hypertrophy",
+    difficulty: "expert",
+    instructions: [
+      "Sit on a bench and rest a barbell across your upper back/traps.",
+      "Grip the bar with a wide grip.",
+      "Press the barbell straight up overhead to lockout.",
+      "Slowly lower the barbell back to your upper traps, keeping your head upright."
+    ],
+    tips: [
+      "Requires excellent shoulder mobility.",
+      "Stop immediately if you feel joint discomfort.",
+      "Use light to moderate weights."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "hypertrophy"
+  }
+];
+
+// Arms exercises (25)
+const armExercises: RawExercise[] = [
+  {
+    name: "Barbell Bicep Curl",
+    slug: "barbell-bicep-curl",
+    primaryMuscle: "biceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["forearms"],
+    equipment: "barbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand upright holding a barbell with an underhand grip, hands shoulder-width apart.",
+      "Keep your elbows tucked close to your torso and curl the bar up toward your shoulders.",
+      "Squeeze your biceps at the top, then slowly lower the bar back to the starting position."
+    ],
+    tips: [
+      "Do not swing your torso or use momentum to lift the bar.",
+      "Keep your wrists straight throughout the curl."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Dumbbell Bicep Curl",
+    slug: "dumbbell-bicep-curl",
+    primaryMuscle: "biceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["forearms"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding a dumbbell in each hand, palms facing forward.",
+      "Curl the weights up toward your shoulders, keeping your elbows stationary.",
+      "Lower the dumbbells slowly back to the starting position."
+    ],
+    tips: [
+      "You can curl both dumbbells simultaneously or alternate arms.",
+      "Fully extend your arms at the bottom of each repetition."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Hammer Curl",
+    slug: "hammer-curl",
+    primaryMuscle: "biceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["forearms"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding dumbbells with a neutral grip (palms facing each other).",
+      "Curl the dumbbells up, maintaining the neutral grip.",
+      "Lower the weights slowly to the start position."
+    ],
+    tips: [
+      "This variation targets the brachialis and brachioradialis (forearm).",
+      "Keep your wrists firm and neutral."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Incline Dumbbell Bicep Curl",
+    slug: "incline-dumbbell-bicep-curl",
+    primaryMuscle: "biceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["forearms"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Sit on an incline bench set to 45 degrees, holding dumbbells with arms hanging straight down.",
+      "With palms facing forward, curl the dumbbells up toward your shoulders.",
+      "Slowly lower the weights back to the starting position."
+    ],
+    tips: [
+      "The incline position places the biceps in a deep stretched position.",
+      "Keep your elbows locked in place; do not let them drift forward."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Concentration Curl",
+    slug: "concentration-curl",
+    primaryMuscle: "biceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["forearms"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit on a bench, lean forward, and rest your elbow against the inside of your thigh.",
+      "Hold a dumbbell and curl it up toward your face, focusing entirely on the bicep contraction.",
+      "Lower the weight slowly."
+    ],
+    tips: [
+      "Do not let the elbow slip out of contact with the leg.",
+      "Excellent isolation exercise."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Preacher Curl",
+    slug: "preacher-curl",
+    primaryMuscle: "biceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["forearms"],
+    equipment: "ez_bar",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit at a preacher bench and rest your upper arms flat on the pad.",
+      "Hold an EZ bar with an underhand grip, and lower it until your arms are fully extended.",
+      "Curl the bar up toward your shoulders, then slowly lower it back down."
+    ],
+    tips: [
+      "Avoid locking out your elbows aggressively at the bottom under heavy load.",
+      "Keep your chest pressed into the bench pad."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Cable Bicep Curl",
+    slug: "cable-bicep-curl",
+    primaryMuscle: "biceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["forearms"],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Attach a straight or EZ bar to a low cable pulley.",
+      "Grasp the bar with an underhand grip and stand upright.",
+      "Curl the bar up toward your chest, keeping your elbows fixed.",
+      "Slowly return the bar to the start position."
+    ],
+    tips: [
+      "Cable tension is constant throughout the movement.",
+      "Focus on the stretch at the bottom."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "EZ-Bar Bicep Curl",
+    slug: "ez-bar-bicep-curl",
+    primaryMuscle: "biceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["forearms"],
+    equipment: "ez_bar",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding an EZ-bar at the angled grips with an underhand grip.",
+      "Curl the bar toward your upper chest, squeezing your biceps.",
+      "Slowly lower the bar back down."
+    ],
+    tips: [
+      "The angled grips are much easier on the wrists than a straight barbell.",
+      "Squeeze your glutes to maintain posture."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Spider Curl",
+    slug: "spider-curl",
+    primaryMuscle: "biceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["forearms"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Lie face down on a 45-degree incline bench with your chest resting on the pad and arms hanging down.",
+      "Grasp dumbbells and curl them upward toward your chin.",
+      "Slowly lower the weights back down."
+    ],
+    tips: [
+      "This posture completely eliminates torso swing.",
+      "Focus on the peak contraction at the top of the curl."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Reverse Barbell Curl",
+    slug: "reverse-barbell-curl",
+    primaryMuscle: "forearms",
+    muscleGroup: "arms",
+    secondaryMuscles: ["biceps"],
+    equipment: "barbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding a barbell with an overhand (pronated) grip, hands shoulder-width.",
+      "Curl the bar upward toward your shoulders, keeping elbows at your sides.",
+      "Lower the bar back to the starting position under control."
+    ],
+    tips: [
+      "Heavily targets the forearm extensors and brachioradialis.",
+      "Use a lighter weight than standard bicep curls."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Dumbbell Wrist Curl",
+    slug: "dumbbell-wrist-curl",
+    primaryMuscle: "forearms",
+    muscleGroup: "arms",
+    secondaryMuscles: [],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit on a bench, rest your forearms on your thighs with your palms facing up, holding dumbbells.",
+      "Allow the dumbbells to roll down to your fingertips, stretching the flexors.",
+      "Curl your wrists upward to lift the weights, squeezing your forearms.",
+      "Lower back down with control."
+    ],
+    tips: [
+      "Do not lift your forearms off your thighs during the movement.",
+      "Keep the motion isolated entirely to the wrists."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Dumbbell Reverse Wrist Curl",
+    slug: "dumbbell-reverse-wrist-curl",
+    primaryMuscle: "forearms",
+    muscleGroup: "arms",
+    secondaryMuscles: [],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit on a bench and rest your forearms on your thighs with your palms facing down, holding dumbbells.",
+      "Extend your wrists upward to lift the dumbbells.",
+      "Lower the weights slowly back down."
+    ],
+    tips: [
+      "Excellent for forearm extensor hypertrophy and wrist health.",
+      "Perform with a slow tempo."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Cable Tricep Pushdown",
+    slug: "cable-tricep-pushdown",
+    primaryMuscle: "triceps",
+    muscleGroup: "arms",
+    secondaryMuscles: [],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Attach a rope or straight bar to a high cable pulley.",
+      "Grasp the handle, stand close, and tuck your elbows in near your ribs.",
+      "Push the cable down until your arms are fully extended, squeezing your triceps.",
+      "Slowly let the cable return to the starting elbow-bent position."
+    ],
+    tips: [
+      "Ensure your elbows stay pinned to your sides and do not drift forward or back.",
+      "If using a rope, pull the ends apart at the bottom contraction."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Overhead Dumbbell Tricep Extension",
+    slug: "overhead-dumbbell-tricep-extension",
+    primaryMuscle: "triceps",
+    muscleGroup: "arms",
+    secondaryMuscles: [],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit or stand holding a dumbbell with both hands overhead, arms fully extended.",
+      "Lower the dumbbell behind your head by bending only at your elbows.",
+      "Press the dumbbell back up to the starting position."
+    ],
+    tips: [
+      "Keep your upper arms vertical and close to your head.",
+      "Do not flare your elbows out too far."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Skull Crusher",
+    slug: "skull-crusher",
+    primaryMuscle: "triceps",
+    muscleGroup: "arms",
+    secondaryMuscles: [],
+    equipment: "ez_bar",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Lie on a flat bench holding an EZ-bar over your chest, arms extended.",
+      "Bend at the elbows to lower the bar toward your forehead or slightly behind your head.",
+      "Extend your arms back to the starting position."
+    ],
+    tips: [
+      "Keep your upper arms stationary throughout the entire lift.",
+      "Angling your upper arms slightly backward (towards your head) increases tension on the long head."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Close-Grip Barbell Bench Press",
+    slug: "close-grip-barbell-bench-press",
+    primaryMuscle: "triceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["pectorals", "front_deltoids"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Lie on a flat bench and grip the barbell with a shoulder-width grip.",
+      "Unrack the bar and lower it under control to your lower chest, keeping your elbows tucked close to your body.",
+      "Press the bar back up powerfully to lock out."
+    ],
+    tips: [
+      "A grip that is too narrow (e.g., hands touching) will strain the wrists; shoulder-width is optimal.",
+      "Keep elbows close to your sides to shift load to triceps."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Tricep Dip",
+    slug: "tricep-dip",
+    primaryMuscle: "triceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["pectorals", "front_deltoids"],
+    equipment: "bodyweight",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit on the edge of a bench and place your hands flat next to your hips.",
+      "Slide your hips off the bench and extend your legs in front of you.",
+      "Lower your body by bending your elbows to 90 degrees.",
+      "Press back up to the starting position."
+    ],
+    tips: [
+      "Keep your back close to the bench.",
+      "Elevate your feet on another bench to increase difficulty."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Dumbbell Tricep Kickback",
+    slug: "dumbbell-tricep-kickback",
+    primaryMuscle: "triceps",
+    muscleGroup: "arms",
+    secondaryMuscles: [],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding a dumbbell, hinge forward at the hips, and bend your elbow to 90 degrees.",
+      "Extend your arm straight back, squeezing your tricep at the end of the motion.",
+      "Slowly return your forearm to the starting vertical position."
+    ],
+    tips: [
+      "Do not swing the upper arm; it should remain parallel to your torso.",
+      "Squeeze hard at full extension."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Cable Overhead Tricep Extension",
+    slug: "cable-overhead-tricep-extension",
+    primaryMuscle: "triceps",
+    muscleGroup: "arms",
+    secondaryMuscles: [],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Attach a rope to a cable pulley at high or mid height.",
+      "Grasp the rope, turn your back to the machine, and lean forward with one foot forward.",
+      "Extend your arms forward/upward, pulling the rope overhead.",
+      "Return slowly to the elbow-bent position."
+    ],
+    tips: [
+      "Keep your core tight to prevent arching of the lower back.",
+      "Maintains tension at the stretched position."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Single-Arm Cable Tricep Pushdown",
+    slug: "single-arm-cable-tricep-pushdown",
+    primaryMuscle: "triceps",
+    muscleGroup: "arms",
+    secondaryMuscles: [],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand facing a high pulley with a single handle attachment.",
+      "Grip the handle, tuck your elbow, and push downward to full extension.",
+      "Slowly return to the start position."
+    ],
+    tips: [
+      "Excellent for isolating and correcting tricep strength imbalances.",
+      "Keep the wrist locked."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Diamond Push-Up",
+    slug: "diamond-push-up",
+    primaryMuscle: "triceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["pectorals", "front_deltoids", "abs"],
+    equipment: "bodyweight",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Get into a pushup position but place your hands close together, forming a diamond shape with your index fingers and thumbs.",
+      "Lower your body until your chest touches the back of your hands.",
+      "Press yourself back up to the top."
+    ],
+    tips: [
+      "Tucking the elbows close to your body emphasizes tricep activation.",
+      "Drop to your knees if the full version is too difficult."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Zottman Curl",
+    slug: "zottman-curl",
+    primaryMuscle: "biceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["forearms"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Stand holding dumbbells at your sides, palms facing forward.",
+      "Curl the weights up to your shoulders (supinated grip).",
+      "At the top, rotate your wrists so your palms face down (pronated).",
+      "Lower the dumbbells slowly in the pronated position.",
+      "Rotate wrists back to starting position at the bottom."
+    ],
+    tips: [
+      "Combines standard bicep curls with reverse curls for full arm growth.",
+      "Perform the eccentric lower slowly."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Plate Pinch",
+    slug: "plate-pinch",
+    primaryMuscle: "forearms",
+    muscleGroup: "arms",
+    secondaryMuscles: [],
+    equipment: "other",
+    exerciseType: "stability",
+    difficulty: "intermediate",
+    instructions: [
+      "Place two smooth weight plates together.",
+      "Pinch them together using only your fingers and thumb of one hand.",
+      "Lift the plates off the ground and hold for time.",
+      "Lower and repeat with the other hand."
+    ],
+    tips: [
+      "Builds powerful finger and grip strength.",
+      "Keep your body upright."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "general_fitness"
+  },
+  {
+    name: "Lying Dumbbell Tricep Extension",
+    slug: "lying-dumbbell-tricep-extension",
+    primaryMuscle: "triceps",
+    muscleGroup: "arms",
+    secondaryMuscles: [],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Lie on a flat bench holding dumbbells straight over your shoulders, palms facing each other.",
+      "Bend at the elbows to lower the dumbbells to the sides of your head.",
+      "Extend your arms back to the start."
+    ],
+    tips: [
+      "Keep elbows pointing up at all times.",
+      "Dumbbells offer a safer alternative for elbow joints compared to barbells."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Cable Hammer Curl",
+    slug: "cable-hammer-curl",
+    primaryMuscle: "biceps",
+    muscleGroup: "arms",
+    secondaryMuscles: ["forearms"],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Attach a rope to a low cable pulley.",
+      "Grasp the rope ends with a neutral grip and stand up.",
+      "Curl your hands toward your shoulders, keeping your elbows locked at your sides.",
+      "Lower back down under control."
+    ],
+    tips: [
+      "Keep your wrists solid and straight.",
+      "Pull the ends of the rope slightly outward at the top contraction."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  }
+];
+
+// Legs exercises (28)
+const legExercises: RawExercise[] = [
+  {
+    name: "Barbell Back Squat",
+    slug: "barbell-back-squat",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "hamstrings", "lower_back", "calves"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Rest a barbell across your upper back/traps and stand with feet shoulder-width apart, toes flared slightly.",
+      "Hinge at your hips and bend your knees to squat down, keeping your chest up and back flat.",
+      "Descend until your thighs are at least parallel to the floor.",
+      "Drive back up to the starting position through the mid-foot."
+    ],
+    tips: [
+      "Keep your knees tracking in the same direction as your toes; do not let them cave in.",
+      "Keep your core braced tightly throughout the lift.",
+      "Maintain a flat, neutral spine."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Barbell Front Squat",
+    slug: "barbell-front-squat",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "hamstrings", "core", "upper_back"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "advanced",
+    instructions: [
+      "Rest the bar on your front shoulders, crossing your arms or using a clean grip to secure it.",
+      "Stand with feet shoulder-width apart.",
+      "Squat down deeply while keeping your torso completely vertical.",
+      "Drive back up to the start."
+    ],
+    tips: [
+      "Keep your elbows pointing high throughout the entire squat to support the bar.",
+      "Requires high upper back and core strength."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Goblet Squat",
+    slug: "goblet-squat",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "hamstrings", "core"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding a dumbbell or kettlebell vertically against your chest.",
+      "Position your feet shoulder-width apart.",
+      "Squat down by pushing your hips back and bending your knees.",
+      "Drive back up to a standing position."
+    ],
+    tips: [
+      "Keep the weight pressed against your chest; do not let it drift forward.",
+      "Ideal for beginners to master squat depth and form."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Bulgarian Split Squat",
+    slug: "bulgarian-split-squat",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "hamstrings", "core"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Stand about two feet in front of a bench, holding dumbbells.",
+      "Place the top of your back foot flat on the bench behind you.",
+      "Lower your hips until your rear knee is near the floor and front thigh is parallel.",
+      "Drive through the front heel to return to standing."
+    ],
+    tips: [
+      "Keep your front knee aligned with your toes.",
+      "Leaning your torso slightly forward shifts focus onto the glutes."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Leg Press",
+    slug: "leg-press",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "hamstrings", "calves"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit in the leg press machine and place your feet shoulder-width apart on the sled.",
+      "Lower the sled slowly by bending your knees to 90 degrees.",
+      "Press the sled back up, avoiding locking out your knees."
+    ],
+    tips: [
+      "Do not let your lower back or tailbone lift off the seat pad at the bottom.",
+      "Do not press with your hands on your knees."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Hack Squat",
+    slug: "hack-squat",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "hamstrings", "calves"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Position yourself in the hack squat machine, shoulders under the pads, feet flat.",
+      "Lower your body slowly by bending at the knees.",
+      "Drive the weight back up to extension."
+    ],
+    tips: [
+      "Fires up the quadriceps extensively due to the fixed hip angle.",
+      "Ensure feet are positioned high enough on the plate to protect knees."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Leg Extension",
+    slug: "leg-extension",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: [],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit in the extension machine, adjusting the shin pad to rest just above your ankles.",
+      "Grip the handles and extend your legs straight out in front of you.",
+      "Hold the contraction at the top briefly, then lower the weight under control."
+    ],
+    tips: [
+      "Keep your back flat against the seat rest.",
+      "Excellent isolation movement for the quadriceps."
+    ],
+    isCompound: false,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Romanian Deadlift",
+    slug: "romanian-deadlift",
+    primaryMuscle: "hamstrings",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "lower_back", "forearms"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Stand holding a barbell at hip level with an overhand grip.",
+      "Push your hips back and lower the barbell down your thighs, keeping your knees only slightly bent.",
+      "Descend until you feel a deep stretch in your hamstrings, keeping your back completely flat.",
+      "Drive your hips forward to stand back up, squeezing your glutes."
+    ],
+    tips: [
+      "Do not bend at your waist; the movement must be a pure hip hinge.",
+      "Keep the bar close to your shins/thighs throughout."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Lying Leg Curl",
+    slug: "lying-leg-curl",
+    primaryMuscle: "hamstrings",
+    muscleGroup: "legs",
+    secondaryMuscles: ["calves"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Lie face down on the leg curl machine, adjusting the roller pad to rest below your calves.",
+      "Curl your heels up toward your glutes, keeping your hips flat on the bench.",
+      "Return the weight slowly to the starting position."
+    ],
+    tips: [
+      "Do not let your lower back arch excessively to pull the weight.",
+      "Point your toes to maximize hamstring isolation."
+    ],
+    isCompound: false,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Seated Leg Curl",
+    slug: "seated-leg-curl",
+    primaryMuscle: "hamstrings",
+    muscleGroup: "legs",
+    secondaryMuscles: ["calves"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit in the machine, securing the thigh pad and ankle roller.",
+      "Pull your heels down and backward toward the seat.",
+      "Slowly let your legs return to the straight extended position."
+    ],
+    tips: [
+      "Keep your body pressed firmly back into the seat.",
+      "Provides a greater stretch at the hip compared to lying curls."
+    ],
+    isCompound: false,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Dumbbell Walking Lunge",
+    slug: "dumbbell-walking-lunge",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "hamstrings", "core"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding dumbbells at your sides.",
+      "Step forward with your right leg, lowering your hips until your back knee is near the floor.",
+      "Push off your back foot and step forward into a lunge with the left leg.",
+      "Continue walking forward."
+    ],
+    tips: [
+      "Keep your torso relatively upright.",
+      "Do not let your front knee drift past your toes."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Barbell Hip Thrust",
+    slug: "barbell-hip-thrust",
+    primaryMuscle: "glutes",
+    muscleGroup: "glutes",
+    secondaryMuscles: ["hamstrings", "core"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Sit on the floor with your upper back leaning against a bench, a barbell loaded over your hips.",
+      "Place your feet flat on the floor, shoulder-width apart.",
+      "Drive through your heels to lift your hips and the barbell up, squeezing your glutes.",
+      "Lower your hips back down slowly."
+    ],
+    tips: [
+      "Keep your chin tucked forward looking ahead, not looking up at the ceiling.",
+      "Ensure knees form a 90-degree angle at the top contraction."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Standing Calf Raise",
+    slug: "standing-calf-raise",
+    primaryMuscle: "calves",
+    muscleGroup: "calves",
+    secondaryMuscles: [],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand on the edge of a step or machine platform, balls of feet supported.",
+      "Lower your heels down as far as possible to stretch the calf muscles.",
+      "Push up onto your toes as high as possible, squeezing the calves.",
+      "Lower back down slowly."
+    ],
+    tips: [
+      "Hold the stretch at the bottom for 1-2 seconds to remove tendon bounce.",
+      "Keep your knees straight but not hyper-extended."
+    ],
+    isCompound: false,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Seated Calf Raise",
+    slug: "seated-calf-raise",
+    primaryMuscle: "calves",
+    muscleGroup: "calves",
+    secondaryMuscles: [],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit at the machine, adjusting the knee pad over your thighs.",
+      "Lower your heels down to full stretch.",
+      "Press through the balls of your feet to raise your heels.",
+      "Lower back down slowly."
+    ],
+    tips: [
+      "Targets the soleus muscle specifically (deeper calf muscle).",
+      "Control the eccentric phase."
+    ],
+    isCompound: false,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Leg Press Calf Raise",
+    slug: "leg-press-calf-raise",
+    primaryMuscle: "calves",
+    muscleGroup: "calves",
+    secondaryMuscles: [],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Sit in the leg press machine, place the balls of your feet on the bottom of the sled.",
+      "Unlock the sled and lower your heels to stretch the calves.",
+      "Press the sled back by extending your ankles.",
+      "Lower under control."
+    ],
+    tips: [
+      "Keep your legs straight with a very soft knee bend.",
+      "Hold the stretch at the bottom."
+    ],
+    isCompound: false,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Glute Ham Raise",
+    slug: "glute-ham-raise",
+    primaryMuscle: "hamstrings",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "calves", "lower_back"],
+    equipment: "bodyweight",
+    exerciseType: "strength",
+    difficulty: "advanced",
+    instructions: [
+      "Secure your feet and ankles in the GHR machine, knees resting on the curved pad.",
+      "Start with your torso upright, then lower your body forward until it is parallel to the floor.",
+      "Pull yourself back up using your hamstrings."
+    ],
+    tips: [
+      "Keep your back straight and hips locked.",
+      "An extremely challenging and effective hamstring movement."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: true,
+    recommendedExperience: "advanced",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Step-Up",
+    slug: "step-up",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "hamstrings"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding dumbbells in front of a sturdy box or bench.",
+      "Place your right foot flat on the box.",
+      "Step up, driving through the right heel, and stand tall.",
+      "Step down slowly with your left foot, maintaining control."
+    ],
+    tips: [
+      "Avoid pushing off with the trailing foot; let the front leg do the work.",
+      "Keep your knee stable."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Dumbbell Romanian Deadlift",
+    slug: "dumbbell-romanian-deadlift",
+    primaryMuscle: "hamstrings",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "lower_back"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding dumbbells in front of your thighs.",
+      "Hinge at the hips, keeping your back flat, and slide the dumbbells down your shins.",
+      "Lower until you feel a deep hamstring stretch.",
+      "Drive your hips forward to return to standing."
+    ],
+    tips: [
+      "Keep the weights tight to your legs.",
+      "Dumbbells allow for a more natural hand position."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Box Squat",
+    slug: "box-squat",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "hamstrings", "lower_back"],
+    equipment: "barbell",
+    exerciseType: "strength",
+    difficulty: "intermediate",
+    instructions: [
+      "Set up a box or bench behind you at squat depth.",
+      "Squat down and sit completely on the box, pausing to release leg tension briefly.",
+      "Drive back up from the box powerfully."
+    ],
+    tips: [
+      "Do not rock forward or rock backward on the box.",
+      "Great for building power out of the hole."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Cable Kickback",
+    slug: "cable-kickback",
+    primaryMuscle: "glutes",
+    muscleGroup: "glutes",
+    secondaryMuscles: ["hamstrings"],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Attach an ankle cuff to a low cable pulley.",
+      "Facing the machine, hinge forward and secure your ankle.",
+      "Kick your leg backward, squeezing your glutes.",
+      "Return the leg under control."
+    ],
+    tips: [
+      "Do not swing the leg or hyperextend your lower back.",
+      "Keep the core locked."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Pistol Squat",
+    slug: "pistol-squat",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "hamstrings", "core"],
+    equipment: "bodyweight",
+    exerciseType: "strength",
+    difficulty: "advanced",
+    instructions: [
+      "Stand on one leg, extending the other leg straight in front of you.",
+      "Squat down on the supporting leg as deep as possible.",
+      "Drive back up to a standing position."
+    ],
+    tips: [
+      "Requires exceptional balance, flexibility, and strength.",
+      "Hold a light plate in front of you as a counterweight."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "advanced",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Sissy Squat",
+    slug: "sissy-squat",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["core"],
+    equipment: "bodyweight",
+    exerciseType: "hypertrophy",
+    difficulty: "advanced",
+    instructions: [
+      "Stand holding a support with one hand, holding your heels elevated.",
+      "Lean your torso backward while bending your knees, letting them push forward.",
+      "Lower your body until your knees are close to the floor.",
+      "Push back up to the start, squeezing your quads."
+    ],
+    tips: [
+      "Avoid this if you have knee injuries.",
+      "Creates intense tension on the rectus femoris (quads)."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "advanced",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Sumo Squat",
+    slug: "sumo-squat",
+    primaryMuscle: "glutes",
+    muscleGroup: "legs",
+    secondaryMuscles: ["adductors", "hamstrings", "quadriceps"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand with feet wider than shoulder-width, toes pointing out at 45 degrees.",
+      "Hold a heavy dumbbell by one end hanging between your legs.",
+      "Squat down deeply, keeping your back flat.",
+      "Drive back up to standard."
+    ],
+    tips: [
+      "Emphasizes inner thighs (adductors) and glutes.",
+      "Keep knees aligned with toes."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Donkey Calf Raise",
+    slug: "donkey-calf-raise",
+    primaryMuscle: "calves",
+    muscleGroup: "calves",
+    secondaryMuscles: [],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "intermediate",
+    instructions: [
+      "Secure your hips under the pad of a donkey calf machine, standing on the edge of the platform.",
+      "Lower your heels to stretch the calves.",
+      "Raise up onto your toes, squeezing hard.",
+      "Lower under control."
+    ],
+    tips: [
+      "Leaning forward shifts the load onto the calves in a stretched state.",
+      "Do not bend your knees."
+    ],
+    isCompound: false,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Tibialis Raise",
+    slug: "tibialis-raise",
+    primaryMuscle: "tibialis_anterior",
+    muscleGroup: "calves",
+    secondaryMuscles: [],
+    equipment: "bodyweight",
+    exerciseType: "stability",
+    difficulty: "beginner",
+    instructions: [
+      "Lean your back and butt flat against a wall.",
+      "Place your feet about a foot away from the wall.",
+      "Raise your toes off the ground as high as possible, keeping your heels down.",
+      "Lower back down slowly."
+    ],
+    tips: [
+      "Builds strength on the front of the shin, protecting the knees.",
+      "Hold the contraction at the top."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "rehabilitation"
+  },
+  {
+    name: "Reverse Lunge",
+    slug: "reverse-lunge",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "legs",
+    secondaryMuscles: ["glutes", "hamstrings"],
+    equipment: "dumbbell",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand holding dumbbells at your sides.",
+      "Step backward with your right leg, lowering your hips until your rear knee is near the floor.",
+      "Push off with your front foot to stand back up.",
+      "Repeat on the opposite side."
+    ],
+    tips: [
+      "Easier on the knees than forward lunges.",
+      "Maintain balance."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Glute Bridge",
+    slug: "glute-bridge",
+    primaryMuscle: "glutes",
+    muscleGroup: "glutes",
+    secondaryMuscles: ["hamstrings"],
+    equipment: "bodyweight",
+    exerciseType: "endurance",
+    difficulty: "beginner",
+    instructions: [
+      "Lie on your back with knees bent and feet flat on the floor.",
+      "Drive through your heels to raise your hips, squeezing your glutes.",
+      "Lower slowly back down."
+    ],
+    tips: [
+      "Do not arch your lower back at the top.",
+      "Brace your core."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Cable Pull-Through",
+    slug: "cable-pull-through",
+    primaryMuscle: "glutes",
+    muscleGroup: "glutes",
+    secondaryMuscles: ["hamstrings", "lower_back"],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Stand facing away from a low cable pulley with a rope attachment.",
+      "Reach between your legs and hold the rope, stepping forward.",
+      "Hinge at the hips, keeping your back flat, letting the rope pull back.",
+      "Drive your hips forward, squeezing your glutes to stand tall."
+    ],
+    tips: [
+      "Do not pull with your arms; let your hips do the work.",
+      "Keep your spine neutral."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  }
+];
+
+// Core exercises (20)
+const coreExercises: RawExercise[] = [
+  {
+    name: "Plank",
+    slug: "plank",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: ["shoulders", "glutes"],
+    equipment: "bodyweight",
+    exerciseType: "stability",
+    difficulty: "beginner",
+    instructions: [
+      "Place your forearms on the floor, elbows aligned under shoulders.",
+      "Extend your legs behind you and raise up, keeping your body in a straight line from head to heels.",
+      "Hold the position while breathing steadily."
+    ],
+    tips: [
+      "Do not let your hips sag or your lower back arch.",
+      "Squeeze your glutes and brace your core."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "all",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Side Plank",
+    slug: "side-plank",
+    primaryMuscle: "obliques",
+    muscleGroup: "core",
+    secondaryMuscles: ["shoulders", "abs"],
+    equipment: "bodyweight",
+    exerciseType: "stability",
+    difficulty: "beginner",
+    instructions: [
+      "Lie on your side, supporting your weight on your forearm.",
+      "Lift your hips to form a straight diagonal line from head to feet.",
+      "Hold for the target duration, then repeat on the opposite side."
+    ],
+    tips: [
+      "Keep your hips stacked and do not let them rotate forward or sag down."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "all",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Ab Wheel Rollout",
+    slug: "ab-wheel-rollout",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: ["lats", "shoulders", "lower_back"],
+    equipment: "other",
+    exerciseType: "stability",
+    difficulty: "advanced",
+    instructions: [
+      "Kneel on the floor holding the ab wheel handles under your shoulders.",
+      "Roll the wheel forward, extending your body in a straight line.",
+      "Roll the wheel back to the start using your abs."
+    ],
+    tips: [
+      "Do not arch your lower back; keep your spine slightly rounded (hollow body) to protect it.",
+      "Only roll out as far as you can control."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Hanging Leg Raise",
+    slug: "hanging-leg-raise",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: ["hip_flexors", "forearms"],
+    equipment: "pull_up_bar",
+    exerciseType: "strength",
+    difficulty: "advanced",
+    instructions: [
+      "Hang from a pull-up bar, arms fully extended.",
+      "Keep your legs straight and raise them in front of you until they are parallel to the floor.",
+      "Lower your legs slowly back to the start."
+    ],
+    tips: [
+      "Avoid swinging or using momentum.",
+      "Tuck your knees to make this exercise easier."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "advanced",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Cable Crunch",
+    slug: "cable-crunch",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: [],
+    equipment: "cable",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Kneel facing a cable pulley machine with a rope attachment.",
+      "Hold the rope ends next to your face.",
+      "Crunch downward, bringing your elbows towards your thighs, flexing your abs.",
+      "Slowly return to the upright position."
+    ],
+    tips: [
+      "Do not pull with your arms or bend at the hips; flex your spine.",
+      "Exhale completely at the bottom contraction."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Decline Sit-Up",
+    slug: "decline-sit-up",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: ["hip_flexors"],
+    equipment: "bodyweight",
+    exerciseType: "endurance",
+    difficulty: "beginner",
+    instructions: [
+      "Secure your legs in a decline sit-up bench.",
+      "Lie back, then sit up by contracting your abs.",
+      "Lower yourself back down with control."
+    ],
+    tips: [
+      "Do not pull on your neck with your hands.",
+      "Hold a weight plate on your chest to increase resistance."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Russian Twist",
+    slug: "russian-twist",
+    primaryMuscle: "obliques",
+    muscleGroup: "core",
+    secondaryMuscles: ["abs"],
+    equipment: "bodyweight",
+    exerciseType: "endurance",
+    difficulty: "beginner",
+    instructions: [
+      "Sit on the floor, lean back slightly, and lift your feet off the floor.",
+      "Rotate your torso to the right, touching the floor, then rotate to the left.",
+      "Continue alternating sides."
+    ],
+    tips: [
+      "Hold a medicine ball or dumbbell to make it harder.",
+      "Ensure you rotate your chest, not just your arms."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Bicycle Crunch",
+    slug: "bicycle-crunch",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: ["obliques"],
+    equipment: "bodyweight",
+    exerciseType: "endurance",
+    difficulty: "beginner",
+    instructions: [
+      "Lie on your back, knees bent at 90 degrees.",
+      "Place your hands behind your head.",
+      "Perform a bicycle motion by bringing one elbow to the opposite knee while extending the other leg.",
+      "Alternate sides in a rhythmic motion."
+    ],
+    tips: [
+      "Do not tug on your neck.",
+      "Perform the movement slowly to maximize tension."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Dead Bug",
+    slug: "dead-bug",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: [],
+    equipment: "bodyweight",
+    exerciseType: "stability",
+    difficulty: "beginner",
+    instructions: [
+      "Lie on your back, arms extended up, knees bent at 90 degrees.",
+      "Slowly lower your right arm overhead and extend your left leg forward, keeping your lower back pressed to the floor.",
+      "Return to the start, then repeat on the opposite side."
+    ],
+    tips: [
+      "The key is keeping your lower back in contact with the floor at all times."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "all",
+    recommendedGoal: "rehabilitation"
+  },
+  {
+    name: "Bird Dog",
+    slug: "bird-dog",
+    primaryMuscle: "lower_back",
+    muscleGroup: "core",
+    secondaryMuscles: ["glutes", "shoulders"],
+    equipment: "bodyweight",
+    exerciseType: "stability",
+    difficulty: "beginner",
+    instructions: [
+      "Get onto all fours, hands under shoulders, knees under hips.",
+      "Extend your right arm forward and left leg backward.",
+      "Return to the start and repeat on the opposite side."
+    ],
+    tips: [
+      "Keep your hips square and do not rotate them.",
+      "Engage your glutes and core."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "all",
+    recommendedGoal: "rehabilitation"
+  },
+  {
+    name: "Captain's Chair Leg Raise",
+    slug: "captains-chair-leg-raise",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: ["hip_flexors"],
+    equipment: "machine",
+    exerciseType: "hypertrophy",
+    difficulty: "beginner",
+    instructions: [
+      "Position yourself in the captain's chair, forearms resting on pads.",
+      "Raise your legs straight out in front of you to parallel.",
+      "Lower under control."
+    ],
+    tips: [
+      "Ensure you don't swing or use momentum.",
+      "Bend your knees to make it easier."
+    ],
+    isCompound: false,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "hypertrophy"
+  },
+  {
+    name: "Woodchopper",
+    slug: "woodchopper",
+    primaryMuscle: "obliques",
+    muscleGroup: "core",
+    secondaryMuscles: ["shoulders", "abs"],
+    equipment: "cable",
+    exerciseType: "stability",
+    difficulty: "intermediate",
+    instructions: [
+      "Stand sideways to a high cable pulley.",
+      "Hold the handle with both hands and pull it diagonally down and across your body, rotating your hips.",
+      "Slowly return to the start."
+    ],
+    tips: [
+      "Pivot on your back foot as you twist.",
+      "Keep your arms relatively straight."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "sport_performance"
+  },
+  {
+    name: "Reverse Crunch",
+    slug: "reverse-crunch",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: [],
+    equipment: "bodyweight",
+    exerciseType: "endurance",
+    difficulty: "beginner",
+    instructions: [
+      "Lie on your back, knees bent, arms at your sides.",
+      "Pull your knees toward your chest, lifting your hips slightly off the floor.",
+      "Lower back down slowly."
+    ],
+    tips: [
+      "Do not use momentum to swing your legs.",
+      "Focus on rolling your pelvis up."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Flutter Kicks",
+    slug: "flutter-kicks",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: ["hip_flexors"],
+    equipment: "bodyweight",
+    exerciseType: "endurance",
+    difficulty: "beginner",
+    instructions: [
+      "Lie on your back, hands under your hips, feet hovering slightly off the floor.",
+      "Perform small, rapid scissor kicks with your legs.",
+      "Maintain a flat lower back."
+    ],
+    tips: [
+      "Keep your head and shoulders slightly elevated for extra activation."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Toes to Bar",
+    slug: "toes-to-bar",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: ["forearms", "hip_flexors", "lats"],
+    equipment: "pull_up_bar",
+    exerciseType: "strength",
+    difficulty: "advanced",
+    instructions: [
+      "Hang from a bar and pull your toes up until they contact the bar between your hands.",
+      "Lower under control."
+    ],
+    tips: [
+      "Requires high lat and grip strength alongside abs."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "advanced",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "L-Sit",
+    slug: "l-sit",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: ["triceps", "shoulders", "hip_flexors"],
+    equipment: "dip_bars",
+    exerciseType: "strength",
+    difficulty: "advanced",
+    instructions: [
+      "Support your body on dip bars or parallettes, keeping arms straight.",
+      "Raise your legs straight out in front of you until they are parallel to the floor.",
+      "Hold this position for the target duration."
+    ],
+    tips: [
+      "Keep your shoulders depressed down away from your ears.",
+      "Keep your knees fully locked out."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "advanced",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Suitcase Carry",
+    slug: "suitcase-carry",
+    primaryMuscle: "obliques",
+    muscleGroup: "core",
+    secondaryMuscles: ["forearms", "shoulders"],
+    equipment: "dumbbell",
+    exerciseType: "stability",
+    difficulty: "intermediate",
+    instructions: [
+      "Stand upright holding a heavy dumbbell in one hand.",
+      "Walk forward slowly, maintaining a completely straight and upright spine, resisting the lean.",
+      "Switch sides and repeat."
+    ],
+    tips: [
+      "Engage your obliques on the opposite side of the weight to stay straight."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "general_fitness"
+  },
+  {
+    name: "Roman Chair Back Extension",
+    slug: "roman-chair-back-extension",
+    primaryMuscle: "lower_back",
+    muscleGroup: "core",
+    secondaryMuscles: ["glutes", "hamstrings"],
+    equipment: "machine",
+    exerciseType: "strength",
+    difficulty: "beginner",
+    instructions: [
+      "Position yourself face down on a Roman Chair.",
+      "Lower your upper body, hinging at the hips.",
+      "Raise your torso until your body is aligned."
+    ],
+    tips: [
+      "Move slowly; do not snap the lower back."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "beginner",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Hanging Knee Raise",
+    slug: "hanging-knee-raise",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: ["hip_flexors", "forearms"],
+    equipment: "pull_up_bar",
+    exerciseType: "endurance",
+    difficulty: "beginner",
+    instructions: [
+      "Hang from a bar and pull your knees up toward your chest.",
+      "Lower under control."
+    ],
+    tips: [
+      "A great step up for beginners before attempting straight leg raises."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "beginner",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Hollow Body Hold",
+    slug: "hollow-body-hold",
+    primaryMuscle: "abs",
+    muscleGroup: "core",
+    secondaryMuscles: [],
+    equipment: "bodyweight",
+    exerciseType: "stability",
+    difficulty: "intermediate",
+    instructions: [
+      "Lie on your back. Elevate your shoulders and raise your feet 6 inches off the floor.",
+      "Extend your arms overhead.",
+      "Press your lower back flat into the ground and hold."
+    ],
+    tips: [
+      "Do not let your lower back lift off the floor."
+    ],
+    isCompound: false,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "general_fitness"
+  }
+];
+
+// Cardio & Full Body exercises (18)
+const cardioExercises: RawExercise[] = [
+  {
+    name: "Running",
+    slug: "running",
+    primaryMuscle: "full_body",
+    muscleGroup: "cardio",
+    secondaryMuscles: ["quadriceps", "hamstrings", "calves", "glutes"],
+    equipment: "bodyweight",
+    exerciseType: "cardio",
+    difficulty: "beginner",
+    instructions: [
+      "Maintain an upright posture.",
+      "Land mid-foot and drive forward.",
+      "Breathe rhythmically."
+    ],
+    tips: [
+      "Wear proper shoes.",
+      "Start slowly."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "all",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Rowing Machine",
+    slug: "rowing-machine",
+    primaryMuscle: "full_body",
+    muscleGroup: "cardio",
+    secondaryMuscles: ["latissimus_dorsi", "legs", "biceps", "forearms"],
+    equipment: "cardio_machine",
+    exerciseType: "cardio",
+    difficulty: "beginner",
+    instructions: [
+      "Push off with your legs, lean back slightly, then pull the handle to your ribs.",
+      "Extend arms, lean forward, and slide back."
+    ],
+    tips: [
+      "60% of the power should come from the legs."
+    ],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "all",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Stationary Cycling",
+    slug: "stationary-cycling",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "cardio",
+    secondaryMuscles: ["hamstrings", "calves", "glutes"],
+    equipment: "cardio_machine",
+    exerciseType: "cardio",
+    difficulty: "beginner",
+    instructions: [
+      "Adjust seat height.",
+      "Pedal at a steady cadence."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "all",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Elliptical Trainer",
+    slug: "elliptical-trainer",
+    primaryMuscle: "full_body",
+    muscleGroup: "cardio",
+    secondaryMuscles: ["quadriceps", "glutes", "arms"],
+    equipment: "cardio_machine",
+    exerciseType: "cardio",
+    difficulty: "beginner",
+    instructions: [
+      "Stand on the foot pedals and hold the handles.",
+      "Stride forward smoothly."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "all",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Jump Rope",
+    slug: "jump-rope",
+    primaryMuscle: "calves",
+    muscleGroup: "cardio",
+    secondaryMuscles: ["shoulders", "quadriceps"],
+    equipment: "other",
+    exerciseType: "cardio",
+    difficulty: "beginner",
+    instructions: [
+      "Hold rope ends and jump slightly off the floor.",
+      "Rotate rope using only your wrists."
+    ],
+    tips: [
+      "Keep jumps low."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "all",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Burpee",
+    slug: "burpee",
+    primaryMuscle: "full_body",
+    muscleGroup: "cardio",
+    secondaryMuscles: ["pectorals", "triceps", "quadriceps", "core"],
+    equipment: "bodyweight",
+    exerciseType: "cardio",
+    difficulty: "intermediate",
+    instructions: [
+      "Squat down and place hands on the floor.",
+      "Kick feet back into a pushup position.",
+      "Perform a pushup, jump feet back, and jump up explosively."
+    ],
+    tips: [
+      "Keep a steady pace."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Kettlebell Swing",
+    slug: "kettlebell-swing",
+    primaryMuscle: "full_body",
+    muscleGroup: "full_body",
+    secondaryMuscles: ["glutes", "hamstrings", "core", "shoulders"],
+    equipment: "kettlebell",
+    exerciseType: "power",
+    difficulty: "intermediate",
+    instructions: [
+      "Hold a kettlebell and hinge back at your hips.",
+      "Snap your hips forward to swing the kettlebell to shoulder height.",
+      "Let the bell fall back down, hinging again."
+    ],
+    tips: [
+      "Do not lift the kettlebell with your shoulders; it's a leg hinge."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "sport_performance"
+  },
+  {
+    name: "Thruster",
+    slug: "thruster",
+    primaryMuscle: "full_body",
+    muscleGroup: "full_body",
+    secondaryMuscles: ["quadriceps", "shoulders", "triceps", "core"],
+    equipment: "barbell",
+    exerciseType: "power",
+    difficulty: "advanced",
+    instructions: [
+      "Hold a barbell at shoulders.",
+      "Squat down deeply.",
+      "Drive up to standing and immediately press the bar overhead."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "sport_performance"
+  },
+  {
+    name: "Mountain Climbers",
+    slug: "mountain-climbers",
+    primaryMuscle: "abs",
+    muscleGroup: "cardio",
+    secondaryMuscles: ["shoulders", "hip_flexors"],
+    equipment: "bodyweight",
+    exerciseType: "cardio",
+    difficulty: "beginner",
+    instructions: [
+      "Get into a plank position.",
+      "Drive knees to chest rapidly, alternating sides."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "all",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Battle Ropes",
+    slug: "battle-ropes",
+    primaryMuscle: "full_body",
+    muscleGroup: "cardio",
+    secondaryMuscles: ["shoulders", "arms", "core"],
+    equipment: "other",
+    exerciseType: "cardio",
+    difficulty: "beginner",
+    instructions: [
+      "Hold ropes, stand in a half squat.",
+      "Create rapid waves in the ropes."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "all",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Stair Climber",
+    slug: "stair-climber",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "cardio",
+    secondaryMuscles: ["glutes", "calves"],
+    equipment: "cardio_machine",
+    exerciseType: "cardio",
+    difficulty: "beginner",
+    instructions: [
+      "Step on the climbing machine stairs.",
+      "Climb at a steady speed."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: true,
+    isBodyweight: false,
+    recommendedExperience: "all",
+    recommendedGoal: "endurance"
+  },
+  {
+    name: "Clean and Press",
+    slug: "clean-and-press",
+    primaryMuscle: "full_body",
+    muscleGroup: "full_body",
+    secondaryMuscles: ["hamstrings", "glutes", "shoulders", "triceps"],
+    equipment: "barbell",
+    exerciseType: "power",
+    difficulty: "advanced",
+    instructions: [
+      "Pull the barbell off the floor and clean it to shoulders.",
+      "Press overhead."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "sport_performance"
+  },
+  {
+    name: "Snatch",
+    slug: "snatch",
+    primaryMuscle: "full_body",
+    muscleGroup: "full_body",
+    secondaryMuscles: ["glutes", "shoulders", "hamstrings", "core"],
+    equipment: "barbell",
+    exerciseType: "power",
+    difficulty: "expert",
+    instructions: [
+      "Pull the barbell off the floor and catch it overhead in a squat."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "advanced",
+    recommendedGoal: "sport_performance"
+  },
+  {
+    name: "Farmer's Walk",
+    slug: "farmers-walk",
+    primaryMuscle: "full_body",
+    muscleGroup: "full_body",
+    secondaryMuscles: ["forearms", "trapezius", "core"],
+    equipment: "dumbbell",
+    exerciseType: "strength",
+    difficulty: "beginner",
+    instructions: [
+      "Hold heavy dumbbells and walk forward."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "all",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Bear Crawl",
+    slug: "bear-crawl",
+    primaryMuscle: "full_body",
+    muscleGroup: "full_body",
+    secondaryMuscles: ["core", "shoulders"],
+    equipment: "bodyweight",
+    exerciseType: "stability",
+    difficulty: "intermediate",
+    instructions: [
+      "Move forward on hands and toes, keeping knees close to the floor."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "all",
+    recommendedGoal: "general_fitness"
+  },
+  {
+    name: "Sled Push",
+    slug: "sled-push",
+    primaryMuscle: "full_body",
+    muscleGroup: "full_body",
+    secondaryMuscles: ["quadriceps", "glutes", "calves", "core"],
+    equipment: "other",
+    exerciseType: "strength",
+    difficulty: "beginner",
+    instructions: [
+      "Push a weighted prowler sled forward."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "all",
+    recommendedGoal: "strength"
+  },
+  {
+    name: "Box Jump",
+    slug: "box-jump",
+    primaryMuscle: "quadriceps",
+    muscleGroup: "cardio",
+    secondaryMuscles: ["glutes", "hamstrings", "calves"],
+    equipment: "other",
+    exerciseType: "plyometric",
+    difficulty: "intermediate",
+    instructions: [
+      "Jump onto a stable box.",
+      "Step down safely."
+    ],
+    tips: [],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: false,
+    recommendedExperience: "intermediate",
+    recommendedGoal: "sport_performance"
+  },
+  {
+    name: "Burpee Pull-Up",
+    slug: "burpee-pull-up",
+    primaryMuscle: "full_body",
+    muscleGroup: "full_body",
+    secondaryMuscles: ["latissimus_dorsi", "biceps", "pectorals", "triceps", "quadriceps"],
+    equipment: "pull_up_bar",
+    exerciseType: "cardio",
+    difficulty: "advanced",
+    instructions: [
+      "Perform a burpee underneath a pull-up bar.",
+      "As you jump up at the end of the burpee, grab the pull-up bar and pull your chin over the bar."
+    ],
+    tips: [
+      "An intense compound full-body cardiovascular exercise."
+    ],
+    isCompound: true,
+    isMachine: false,
+    isBodyweight: true,
+    recommendedExperience: "advanced",
+    recommendedGoal: "endurance"
+  }
+];
+
+// Combine all exercises
+const allExercises: RawExercise[] = [
+  ...chestExercises,
+  ...additionalChestExercises,
+  ...backExercises,
+  ...shoulderExercises,
+  ...armExercises,
+  ...legExercises,
+  ...coreExercises,
+  ...cardioExercises,
+];
+
+// Run validations
+const slugs = new Set<string>();
+const errors: string[] = [];
+
+console.log(`Total exercises compiled in generator: ${allExercises.length}`);
+
+for (const [idx, item] of allExercises.entries()) {
+  const label = `Item #${idx + 1} (${item.name || "Unnamed"})`;
+
+  if (!item.name) errors.push(`${label}: Missing 'name'`);
+  if (!item.slug) {
+    errors.push(`${label}: Missing 'slug'`);
+  } else {
+    if (slugs.has(item.slug)) {
+      errors.push(`${label}: Duplicate slug '${item.slug}'`);
+    }
+    slugs.add(item.slug);
+  }
+
+  if (!MUSCLE_GROUPS.includes(item.muscleGroup)) {
+    errors.push(`${label}: Invalid muscleGroup '${item.muscleGroup}'`);
+  }
+
+  if (!PRIMARY_MUSCLES.includes(item.primaryMuscle)) {
+    errors.push(`${label}: Invalid primaryMuscle '${item.primaryMuscle}'`);
+  }
+
+  for (const sec of item.secondaryMuscles) {
+    if (!PRIMARY_MUSCLES.includes(sec)) {
+      errors.push(`${label}: Invalid secondaryMuscle '${sec}'`);
+    }
+  }
+
+  if (!EQUIPMENT.includes(item.equipment)) {
+    errors.push(`${label}: Invalid equipment '${item.equipment}'`);
+  }
+
+  if (!EXERCISE_TYPES.includes(item.exerciseType)) {
+    errors.push(`${label}: Invalid exerciseType '${item.exerciseType}'`);
+  }
+
+  if (!DIFFICULTY.includes(item.difficulty)) {
+    errors.push(`${label}: Invalid difficulty '${item.difficulty}'`);
+  }
+
+  if (!RECOMMENDED_EXPERIENCE.includes(item.recommendedExperience)) {
+    errors.push(
+      `${label}: Invalid recommendedExperience '${item.recommendedExperience}'`
+    );
+  }
+
+  if (!RECOMMENDED_GOAL.includes(item.recommendedGoal)) {
+    errors.push(`${label}: Invalid recommendedGoal '${item.recommendedGoal}'`);
+  }
+
+  if (!Array.isArray(item.instructions)) {
+    errors.push(`${label}: 'instructions' must be an array`);
+  }
+
+  if (!Array.isArray(item.tips)) {
+    errors.push(`${label}: 'tips' must be an array`);
+  }
+}
+
+if (errors.length > 0) {
+  console.error("❌ Validation failed with the following errors:");
+  errors.forEach((err) => console.error(`  - ${err}`));
+  process.exit(1);
+}
+
+console.log("✅ All validations passed successfully!");
+
+const targetPath = path.resolve(process.cwd(), "data/exercises.json");
+fs.writeFileSync(targetPath, JSON.stringify(allExercises, null, 2), "utf8");
+console.log(`✅ Saved ${allExercises.length} validated exercises to ${targetPath}`);
+process.exit(0);

@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-background-subtle: var(--background-subtle);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+:root {
+  --background: #ffffff;
+  --background-subtle: #f7f7f5;
+  --surface: #ffffff;
+  --border: #e5e5e2;
+  --border-hover: #d4d4d1;
+  --text-primary: #1a1a18;
+  --text-secondary: #6b6b66;
+  --text-muted: #9c9c96;
+  --primary: #ff5a1f;
+  --primary-hover: #e64e17;
+  --primary-subtle: #fff0ea;
+  --success: #2fb344;
+  --warning: #e8a317;
+  --danger: #e5484d;
+  --info: #3b82f6;
+  --ring: #ff5a1f;
+}
+
+.dark {
+  --background: #0d0d0c;
+  --background-subtle: #141413;
+  --surface: #171716;
+  --border: #2a2a28;
+  --border-hover: #3a3a37;
+  --text-primary: #f5f5f3;
+  --text-secondary: #a8a8a2;
+  --text-muted: #6e6e68;
+  --primary: #ff7a45;
+  --primary-hover: #ff8f63;
+  --primary-subtle: #3a1f16;
+  --success: #2fb344;
+  --warning: #e8a317;
+  --danger: #e5484d;
+  --info: #3b82f6;
+  --ring: #ff7a45;
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+/* ── Smooth theme transition ─────────────────────────────────── */
+*,
+*::before,
+*::after {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    fill 150ms ease,
+    stroke 150ms ease,
+    box-shadow 150ms ease;
+}
+
+/* Don't animate transforms/opacity with the theme transition */
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease;
+}
+
+/* Custom Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
