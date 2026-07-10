@@ -282,7 +282,7 @@ export default async function DashboardPage() {
         </h2>
         <div className="flex flex-col gap-3">
           <QuickAction
-            href="/workouts/session"
+            href="/programs"
             icon={Plus}
             label="Start Workout"
             description="Log today's training session"
@@ -336,7 +336,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <Link
-            href="/workouts/session"
+            href="/programs"
             className="mt-1 inline-flex h-9 items-center gap-2 rounded-xl bg-[var(--primary)] px-5 text-sm font-semibold text-white transition-colors hover:bg-[var(--primary-hover)] active:scale-95"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
