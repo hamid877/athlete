@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DeleteExerciseButton } from "@/components/workouts/DeleteExerciseButton";
 import { ReorderExerciseButtons } from "@/components/workouts/ReorderExerciseButtons";
+import { StartWorkoutButton } from "@/components/workouts/StartWorkoutButton";
 
 /* ─── Local types for populated lean result ──────────────────── */
 
@@ -78,11 +79,13 @@ export default async function WorkoutDetailsPage({ params }: Props) {
   return (
     <div>
       {/* ─── Header ─── */}
-      <div className="mb-6">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-[var(--text-primary)]">
           {workout.name}
         </h1>
-    
+        {sorted.length > 0 && (
+          <StartWorkoutButton workoutId={id} />
+        )}
       </div>
 
       {/* ─── Exercises ─── */}

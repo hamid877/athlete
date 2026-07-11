@@ -71,7 +71,8 @@ export function ExercisePicker({ workoutId, exerciseCount }: ExercisePickerProps
     reset,
     formState: { errors },
   } = useForm<AddExerciseInput>({
-    resolver: zodResolver(addExerciseSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(addExerciseSchema as any),
     defaultValues: {
       exerciseId: "",
       order: exerciseCount,
@@ -208,7 +209,8 @@ export function ExercisePicker({ workoutId, exerciseCount }: ExercisePickerProps
 
           <form
             id="add-exercise-form"
-            onSubmit={handleSubmit(onSubmit)}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onSubmit={handleSubmit(onSubmit as any)}
             className="space-y-5 pt-1"
           >
             {/* Hidden fields */}
