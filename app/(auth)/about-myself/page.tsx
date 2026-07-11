@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { 
   Dumbbell, 
@@ -34,7 +34,6 @@ export default function AboutMyselfPage() {
     register,
     handleSubmit,
     control,
-    watch,
     trigger,
     formState: { errors },
   } = useForm<AboutMyselfInput>({
@@ -53,9 +52,9 @@ export default function AboutMyselfPage() {
     },
   });
 
-  const selectedGoal = watch("fitnessGoal");
-  const selectedLocation = watch("workoutLocation");
-  const selectedGender = watch("gender");
+  const selectedGoal = useWatch({ control, name: "fitnessGoal" });
+  const selectedLocation = useWatch({ control, name: "workoutLocation" });
+  const selectedGender = useWatch({ control, name: "gender" });
 
   // Step navigation validation
   const handleNext = async () => {

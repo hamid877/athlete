@@ -15,6 +15,9 @@ interface SetRowProps {
   setIndex: number;
   initialSet: PerformedSet;
   repRangeLabel: string;
+  restDuration: number;
+  isActive?: boolean;
+  onComplete?: (exIdx: number, setIdx: number, weight: number, reps: number, restSeconds: number) => void;
 }
 
 export function SetRow({
@@ -23,6 +26,9 @@ export function SetRow({
   setIndex,
   initialSet,
   repRangeLabel,
+  restDuration,
+  isActive,
+  onComplete,
 }: SetRowProps) {
   const [weight, setWeight] = useState(
     initialSet.completed ? String(initialSet.weight) : ""
@@ -67,6 +73,9 @@ export function SetRow({
 
       setCompleted(true);
       toast.success(`Set ${setIndex + 1} logged successfully!`);
+      if (onComplete) {
+        onComplete(exerciseIndex, setIndex, parsedWeight, parsedReps, restDuration);
+      }
     } catch {
       toast.error("Network error. Please try again.");
     } finally {
@@ -76,7 +85,7 @@ export function SetRow({
 
   if (completed) {
     return (
-      <div className="flex items-center justify-between px-3 py-2.5 bg-[color-mix(in_srgb,var(--success)_8%,transparent)] rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)]">
+      <div className="flex items-center justify-between px-3 py-2.5 bg-[color-mix(in_srgb,var(--success)_8%,transparent)] rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] opacity-60 transition-opacity">
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium text-[var(--text-primary)] w-12">
             Set {setIndex + 1}
@@ -93,7 +102,7 @@ export function SetRow({
   }
 
   return (
-    <div className="flex flex-col gap-2 px-3 py-2.5 bg-[var(--background-subtle)] rounded-[var(--radius-sm)] border border-[var(--border)]">
+    <div className={`flex flex-col gap-2 px-3 py-2.5 bg-[var(--background-subtle)] rounded-[var(--radius-sm)] border transition-all ${isActive ? 'border-[var(--primary)] ring-1 ring-[var(--primary)] shadow-sm' : 'border-[var(--border)]'}`}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm font-medium text-[var(--text-primary)] w-12 shrink-0">
           Set {setIndex + 1}
@@ -106,6 +115,7 @@ export function SetRow({
         <div className="flex items-center gap-2 ml-auto">
           <div className="flex items-center gap-1">
             <input
+              id={`weight-input-${exerciseIndex}-${setIndex}`}
               type="number"
               min="0"
               step="0.5"

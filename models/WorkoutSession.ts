@@ -133,6 +133,10 @@ const workoutSessionSchema = new Schema<IWorkoutSession>(
         default: "in_progress",
       },
 
+      duration: {
+        type: Number,
+      },
+
       exercises: {
         type: [workoutSessionExerciseSchema],
         default: [],

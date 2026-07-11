@@ -1,66 +1,11 @@
+
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import WorkoutSession from "@/models/WorkoutSession";
 import "@/models/Workout"; // Register Workout model for populate
 import "@/models/exercise.model"; // Register Exercise model for populate
-import { Card } from "@/components/ui/card";
-import { SetRow } from "./SetRow";
-
-/* ─── Local types ─────────────────────────────────────────────── */
-
-interface ExerciseSummary {
-  _id: string;
-  name: string;
-  equipment: string;
-  primaryMuscle: string;
-}
-
-interface PlannedExercise {
-  exerciseId: string;
-  order: number;
-  sets: number;
-  repRange: { min: number; max: number };
-  rest: number;
-}
-
-interface PopulatedWorkout {
-  _id: string;
-  name: string;
-  exercises: PlannedExercise[];
-}
-
-interface PerformedSet {
-  weight: number;
-  reps: number;
-  completed: boolean;
-}
-
-interface PopulatedSessionExercise {
-  exerciseId: ExerciseSummary | null;
-  order: number;
-  notes?: string;
-  performedSets: PerformedSet[];
-}
-
-interface WorkoutSessionData {
-  _id: string;
-  userId: string;
-  workoutId: PopulatedWorkout | null;
-  startedAt: string;
-  finishedAt?: string;
-  status: string;
-  exercises: PopulatedSessionExercise[];
-}
-
-/* ─── Helpers ────────────────────────────────────────────────── */
-
-function formatRest(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return s > 0 ? `${m}m ${s}s` : `${m}m`;
-}
+import { ActiveWorkoutClient, WorkoutSessionData } from "./ActiveWorkoutClient";
 
 function formatStatus(status: string): string {
   switch (status) {
@@ -87,8 +32,6 @@ function statusColor(status: string): string {
       return "bg-[var(--background-subtle)] text-[var(--text-secondary)]";
   }
 }
-
-/* ─── Page ───────────────────────────────────────────────────── */
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -132,13 +75,8 @@ export default async function WorkoutSessionPage({ params }: Props) {
 
   const startedDate = new Date(session.startedAt);
 
-  // Sort session exercises by order
-  const sortedExercises = [...session.exercises].sort(
-    (a, b) => a.order - b.order
-  );
-
   return (
-    <div>
+    <div className="flex flex-col h-full">
       {/* ─── Header ─── */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--text-primary)]">
@@ -160,80 +98,10 @@ export default async function WorkoutSessionPage({ params }: Props) {
         </span>
       </div>
 
-      {/* ─── Exercise list ─── */}
-      {sortedExercises.length === 0 ? (
-        <p className="text-center text-sm text-[var(--text-secondary)] py-10">
-          No exercises in this session.
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {sortedExercises.map((sessionEx, exerciseIndex) => {
-            // Match the planned exercise from the workout template by exerciseId
-            const plannedEx = workout.exercises.find(
-              (e) =>
-                e.exerciseId.toString() ===
-                sessionEx.exerciseId?._id?.toString()
-            );
-
-            const repRangeLabel = plannedEx
-              ? `${plannedEx.repRange.min}–${plannedEx.repRange.max}`
-              : "–";
-
-            const numSets = Math.max(
-              plannedEx?.sets || 0,
-              sessionEx.performedSets.length
-            );
-
-            return (
-              <Card
-                key={`${sessionEx.exerciseId?._id ?? exerciseIndex}`}
-              >
-                {/* Exercise name + planned summary */}
-                <p className="font-semibold text-[var(--text-primary)]">
-                  {sessionEx.exerciseId?.name ?? "Unknown exercise"}
-                </p>
-
-                {plannedEx && (
-                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--text-secondary)]">
-                    <span>{plannedEx.sets} sets</span>
-                    <span>
-                      {plannedEx.repRange.min}–{plannedEx.repRange.max} reps
-                    </span>
-                    <span>{formatRest(plannedEx.rest)} rest</span>
-                  </div>
-                )}
-
-                {/* Set rows */}
-                {numSets > 0 ? (
-                  <div className="mt-4 space-y-2">
-                    {Array.from({ length: numSets }).map((_, setIndex) => {
-                      const set = sessionEx.performedSets[setIndex] || {
-                        weight: 0,
-                        reps: 0,
-                        completed: false,
-                      };
-                      return (
-                        <SetRow
-                          key={`set-${setIndex}`}
-                          sessionId={session._id}
-                          exerciseIndex={exerciseIndex}
-                          setIndex={setIndex}
-                          initialSet={set}
-                          repRangeLabel={repRangeLabel}
-                        />
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="mt-3 text-sm text-[var(--text-secondary)] text-center py-2">
-                    No sets found
-                  </p>
-                )}
-              </Card>
-            );
-          })}
-        </div>
-      )}
+      {/* ─── Client Workout Flow ─── */}
+      <div className="flex-1">
+        <ActiveWorkoutClient session={session} workout={workout} />
+      </div>
     </div>
   );
 }
