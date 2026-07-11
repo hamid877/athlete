@@ -5,6 +5,7 @@ import WorkoutSession from "@/models/WorkoutSession";
 import "@/models/Workout"; // Register Workout model for populate
 import "@/models/exercise.model"; // Register Exercise model for populate
 import { Card } from "@/components/ui/card";
+import { SetRow } from "./SetRow";
 
 /* ─── Local types ─────────────────────────────────────────────── */
 
@@ -29,11 +30,17 @@ interface PopulatedWorkout {
   exercises: PlannedExercise[];
 }
 
+interface PerformedSet {
+  weight: number;
+  reps: number;
+  completed: boolean;
+}
+
 interface PopulatedSessionExercise {
   exerciseId: ExerciseSummary | null;
   order: number;
   notes?: string;
-  performedSets: unknown[];
+  performedSets: PerformedSet[];
 }
 
 interface WorkoutSessionData {
@@ -160,7 +167,7 @@ export default async function WorkoutSessionPage({ params }: Props) {
         </p>
       ) : (
         <div className="space-y-4">
-          {sortedExercises.map((sessionEx, index) => {
+          {sortedExercises.map((sessionEx, exerciseIndex) => {
             // Match the planned exercise from the workout template by exerciseId
             const plannedEx = workout.exercises.find(
               (e) =>
@@ -168,9 +175,18 @@ export default async function WorkoutSessionPage({ params }: Props) {
                 sessionEx.exerciseId?._id?.toString()
             );
 
+            const repRangeLabel = plannedEx
+              ? `${plannedEx.repRange.min}–${plannedEx.repRange.max}`
+              : "–";
+
+            const numSets = Math.max(
+              plannedEx?.sets || 0,
+              sessionEx.performedSets.length
+            );
+
             return (
               <Card
-                key={`${sessionEx.exerciseId?._id ?? index}`}
+                key={`${sessionEx.exerciseId?._id ?? exerciseIndex}`}
               >
                 {/* Exercise name + planned summary */}
                 <p className="font-semibold text-[var(--text-primary)]">
@@ -187,34 +203,30 @@ export default async function WorkoutSessionPage({ params }: Props) {
                   </div>
                 )}
 
-                {/* Planned set rows */}
-                {plannedEx && plannedEx.sets > 0 ? (
+                {/* Set rows */}
+                {numSets > 0 ? (
                   <div className="mt-4 space-y-2">
-                    {Array.from({ length: plannedEx.sets }).map(
-                      (_, setIndex) => (
-                        <div
+                    {Array.from({ length: numSets }).map((_, setIndex) => {
+                      const set = sessionEx.performedSets[setIndex] || {
+                        weight: 0,
+                        reps: 0,
+                        completed: false,
+                      };
+                      return (
+                        <SetRow
                           key={`set-${setIndex}`}
-                          className="flex items-center justify-between px-3 py-2.5 bg-[var(--background-subtle)] rounded-[var(--radius-sm)] border border-[var(--border)]"
-                        >
-                          <div className="flex items-center gap-4">
-                            <span className="text-sm font-medium text-[var(--text-primary)] w-12">
-                              Set {setIndex + 1}
-                            </span>
-                            <span className="text-sm text-[var(--text-secondary)]">
-                              {plannedEx.repRange.min}–{plannedEx.repRange.max}{" "}
-                              reps
-                            </span>
-                          </div>
-                          <span className="text-xs font-medium px-2 py-1 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)]">
-                            Planned
-                          </span>
-                        </div>
-                      )
-                    )}
+                          sessionId={session._id}
+                          exerciseIndex={exerciseIndex}
+                          setIndex={setIndex}
+                          initialSet={set}
+                          repRangeLabel={repRangeLabel}
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="mt-3 text-sm text-[var(--text-secondary)] text-center py-2">
-                    No planned sets
+                    No sets found
                   </p>
                 )}
               </Card>

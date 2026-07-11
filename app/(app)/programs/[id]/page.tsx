@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Calendar, Dumbbell, Coffee } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface Workout {
   _id: string;
@@ -111,36 +112,53 @@ export default function ProgramDetailsPage() {
           </h2>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {program.workoutDays.map((dayObj, index) => {
-              const isRest = dayObj.isRestDay;
-              return (
-                <Card 
-                  key={index} 
-                  className={`flex flex-col transition-colors cursor-pointer hover:border-primary/50 ${
-                    isRest ? "bg-muted/30" : ""
-                  }`}
-                >
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">{dayObj.day}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isRest ? (
-                      <div className="flex items-center text-muted-foreground">
-                        <Coffee className="mr-2 h-4 w-4" />
-                        <span className="font-medium">Rest Day</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center">
-                        <Dumbbell className="mr-2 h-4 w-4 text-primary" />
-                        <span className="font-medium text-foreground line-clamp-1">
-                          {dayObj.workoutId?.name || "Not Assigned"}
-                        </span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+{program.workoutDays.map((dayObj, index) => {
+  const isRest = dayObj.isRestDay;
+
+  const card = (
+    <Card
+      className={`flex flex-col transition-colors ${
+        !isRest && dayObj.workoutId
+          ? "cursor-pointer hover:border-primary/50"
+          : "bg-muted/30"
+      }`}
+    >
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">{dayObj.day}</CardTitle>
+      </CardHeader>
+
+      <CardContent>
+        {isRest ? (
+          <div className="flex items-center text-muted-foreground">
+            <Coffee className="mr-2 h-4 w-4" />
+            <span className="font-medium">Rest Day</span>
+          </div>
+        ) : (
+          <div className="flex items-center">
+            <Dumbbell className="mr-2 h-4 w-4 text-primary" />
+            <span className="font-medium line-clamp-1">
+              {dayObj.workoutId?.name}
+            </span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  if (isRest || !dayObj.workoutId) {
+    return <div key={index}>{card}</div>;
+  }
+
+  return (
+    <Link
+      key={index}
+      href={`/workouts/${dayObj.workoutId._id}`}
+      className="block"
+    >
+      {card}
+    </Link>
+  );
+})}
           </div>
         </div>
       </div>

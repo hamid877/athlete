@@ -42,7 +42,11 @@ export async function POST(req: Request) {
     const exercises = workout.exercises.map((exercise) => ({
       exerciseId: exercise.exerciseId,
       order: exercise.order,
-      performedSets: [],
+      performedSets: Array.from({ length: exercise.sets }, () => ({
+        weight: 0,
+        reps: 0,
+        completed: false,
+      })),
     }));
 
     const workoutSession = await WorkoutSession.create({

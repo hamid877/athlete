@@ -32,11 +32,7 @@ export interface IWorkout extends Document {
 
   name: string;
 
-  day: Day;
-
   isRestDay: boolean;
-
-  estimatedDuration: number;
 
   exercises: IWorkoutExercise[];
 
@@ -99,21 +95,12 @@ const workoutSchema = new Schema<IWorkout>(
       trim: true,
     },
 
-    day: {
-      type: String,
-      enum: DAYS,
-      required: true,
-    },
 
     isRestDay: {
       type: Boolean,
       default: false,
     },
 
-    estimatedDuration: {
-      type: Number,
-      default: 60,
-    },
 
     exercises: {
       type: [workoutExerciseSchema],
@@ -128,7 +115,7 @@ const workoutSchema = new Schema<IWorkout>(
 
 workoutSchema.index({
   userId: 1,
-  day: 1,
+  name: 1,
 });
 
 const Workout: Model<IWorkout> =

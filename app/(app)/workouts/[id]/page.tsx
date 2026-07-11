@@ -125,7 +125,7 @@ export default async function WorkoutDetailsPage({ params }: Props) {
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   <ReorderExerciseButtons 
                     workoutId={id} 
-                    exerciseId={entry.exerciseId._id} 
+                    exerciseId={entry.exerciseId._id.toString()} 
                     isFirst={index === 0} 
                     isLast={index === sorted.length - 1} 
                   />
@@ -140,7 +140,7 @@ export default async function WorkoutDetailsPage({ params }: Props) {
                       <span className="sr-only">Edit {entry.exerciseId.name}</span>
                     </Link>
                   </Button>
-                  <DeleteExerciseButton workoutId={id} exerciseId={entry.exerciseId._id} />
+                  <DeleteExerciseButton workoutId={id} exerciseId={entry.exerciseId._id.toString()} />
                 </div>
               )}
             </Card>

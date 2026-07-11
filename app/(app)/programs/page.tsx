@@ -95,27 +95,37 @@ export default function ProgramsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {programs.map((program) => (
-            <Card key={program._id} className="relative overflow-hidden flex flex-col hover:border-primary/50 transition-colors">
-              <CardHeader className="pb-4">
-                <div className="flex justify-between items-start mb-2 gap-4">
-                  <CardTitle className="text-xl line-clamp-1">{program.name}</CardTitle>
-                  {program.isActive ? (
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-400 shrink-0">
-                      Active
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground shrink-0">
-                      Archived
-                    </span>
-                  )}
-                </div>
-                <CardDescription className="flex items-center text-sm">
-                  <Activity className="mr-1.5 h-3.5 w-3.5" />
-                  {formatSplitType(program.splitType)}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
+  <Link
+    key={program._id}
+    href={`/programs/${program._id}`}
+    className="block"
+  >
+    <Card className="relative overflow-hidden flex flex-col cursor-pointer hover:border-primary/50 hover:bg-muted/20 transition-all">
+      <CardHeader className="pb-4">
+        <div className="flex justify-between items-start mb-2 gap-4">
+          <CardTitle className="text-xl line-clamp-1">
+            {program.name}
+          </CardTitle>
+
+          {program.isActive ? (
+            <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-400 shrink-0">
+              Active
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground shrink-0">
+              Archived
+            </span>
+          )}
+        </div>
+
+        <CardDescription className="flex items-center text-sm">
+          <Activity className="mr-1.5 h-3.5 w-3.5" />
+          {formatSplitType(program.splitType)}
+        </CardDescription>
+      </CardHeader>
+    </Card>
+  </Link>
+))}
         </div>
       )}
     </div>
