@@ -5,7 +5,9 @@ import { connectDB } from "@/lib/db";
 import WorkoutSession from "@/models/WorkoutSession";
 import "@/models/Workout"; // Register Workout model for populate
 import "@/models/exercise.model"; // Register Exercise model for populate
-import { ActiveWorkoutClient, WorkoutSessionData } from "./ActiveWorkoutClient";
+import { ActiveWorkoutClient } from "./ActiveWorkoutClient";
+import { serializeWorkoutSession, PopulatedLeanWorkoutSession } from "@/lib/serializers/workoutSession";
+
 
 function formatStatus(status: string): string {
   switch (status) {
@@ -66,21 +68,26 @@ export default async function WorkoutSessionPage({ params }: Props) {
     notFound();
   }
 
-  const session = rawSession as unknown as WorkoutSessionData;
-  const workout = session.workoutId;
+if (!rawSession.workoutId) {
+  notFound();
+}
 
-  if (!workout) {
-    notFound();
-  }
+const serializedSession = serializeWorkoutSession(rawSession as unknown as PopulatedLeanWorkoutSession);
 
-  const startedDate = new Date(session.startedAt);
+if (!serializedSession.workoutId) {
+  notFound();
+}
+
+const serializedWorkout = serializedSession.workoutId;
+
+  const startedDate = new Date(serializedSession.startedAt);
 
   return (
     <div className="flex flex-col h-full">
       {/* ─── Header ─── */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--text-primary)]">
-          {workout.name}
+          {serializedWorkout.name}
         </h1>
 
         <p className="text-sm text-[var(--text-secondary)] mt-1">
@@ -92,15 +99,15 @@ export default async function WorkoutSessionPage({ params }: Props) {
         </p>
 
         <span
-          className={`mt-2 inline-block text-xs font-medium px-2.5 py-1 rounded-full ${statusColor(session.status)}`}
+          className={`mt-2 inline-block text-xs font-medium px-2.5 py-1 rounded-full ${statusColor(serializedSession.status)}`}
         >
-          {formatStatus(session.status)}
+          {formatStatus(serializedSession.status)}
         </span>
       </div>
 
       {/* ─── Client Workout Flow ─── */}
       <div className="flex-1">
-        <ActiveWorkoutClient session={session} workout={workout} />
+        <ActiveWorkoutClient session={serializedSession} workout={serializedWorkout} />
       </div>
     </div>
   );

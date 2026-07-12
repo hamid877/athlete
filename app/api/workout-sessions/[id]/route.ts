@@ -88,3 +88,47 @@ export async function PATCH(
     );
   }
 }
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    await connectDB();
+
+    const workoutSession = await WorkoutSession.findOne({
+      _id: id,
+      userId: session.user.id,
+    })
+      .populate({
+        path: "workoutId",
+        select: "name",
+      })
+      .populate({
+        path: "exercises.exerciseId",
+        select: "name isCompound primaryMuscle muscleGroup",
+      })
+      .lean();
+
+    if (!workoutSession) {
+      return NextResponse.json(
+        { error: "Workout session not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(workoutSession);
+  } catch (error) {
+    console.error("Get workout session error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

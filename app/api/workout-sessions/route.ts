@@ -66,3 +66,38 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export async function GET(req: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get("status");
+
+    await connectDB();
+
+    const query: Record<string, string> = { userId: session.user.id };
+    if (status) {
+      query.status = status;
+    }
+
+    const workoutSessions = await WorkoutSession.find(query)
+      .sort({ finishedAt: -1, startedAt: -1 })
+      .populate({
+        path: "workoutId",
+        select: "name",
+      })
+      .lean();
+
+    return NextResponse.json(workoutSessions);
+  } catch (error) {
+    console.error("Get workout sessions error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

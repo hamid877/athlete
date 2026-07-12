@@ -6,54 +6,11 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { SetRow } from "./SetRow";
-
-export interface ExerciseSummary {
-  _id: string;
-  name: string;
-  equipment: string;
-  primaryMuscle: string;
-}
-
-export interface PlannedExercise {
-  exerciseId: string;
-  order: number;
-  sets: number;
-  repRange: { min: number; max: number };
-  rest: number;
-}
-
-export interface PopulatedWorkout {
-  _id: string;
-  name: string;
-  exercises: PlannedExercise[];
-}
-
-export interface PerformedSet {
-  weight: number;
-  reps: number;
-  completed: boolean;
-}
-
-export interface PopulatedSessionExercise {
-  exerciseId: ExerciseSummary | null;
-  order: number;
-  notes?: string;
-  performedSets: PerformedSet[];
-}
-
-export interface WorkoutSessionData {
-  _id: string;
-  userId: string;
-  workoutId: PopulatedWorkout | null;
-  startedAt: string;
-  finishedAt?: string;
-  status: string;
-  exercises: PopulatedSessionExercise[];
-}
+import { WorkoutSessionDTO, PopulatedWorkoutDTO } from "@/lib/serializers/workoutSession";
 
 interface ActiveWorkoutClientProps {
-  session: WorkoutSessionData;
-  workout: PopulatedWorkout;
+  session: WorkoutSessionDTO;
+  workout: PopulatedWorkoutDTO;
 }
 
 function formatRest(seconds: number): string {

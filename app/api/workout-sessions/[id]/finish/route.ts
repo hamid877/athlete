@@ -52,7 +52,7 @@ export async function PATCH(
     let totalVolume = 0;
     let completedExercises = 0;
 
-    const workout = workoutSession.workoutId as {
+    const workout = workoutSession.workoutId as unknown as {
       name: string;
       exercises: { exerciseId: { toString(): string }; sets: number }[];
     } | undefined;

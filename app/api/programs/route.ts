@@ -152,13 +152,12 @@ export async function POST(request: Request) {
       const workout = await Workout.create({
         userId: session.user.id,
         name: workoutName,
-        day: wd.day,
         isRestDay: false,
       });
 
       workoutDays.push({
         day: wd.day,
-        workoutId: workout._id as Types.ObjectId,
+        workoutId: workout._id,
         isRestDay: false,
       });
     }

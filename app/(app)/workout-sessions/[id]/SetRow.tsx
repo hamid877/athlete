@@ -2,18 +2,13 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-
-interface PerformedSet {
-  weight: number;
-  reps: number;
-  completed: boolean;
-}
+import { PerformedSetDTO } from "@/lib/serializers/workoutSession";
 
 interface SetRowProps {
   sessionId: string;
   exerciseIndex: number;
   setIndex: number;
-  initialSet: PerformedSet;
+  initialSet: PerformedSetDTO;
   repRangeLabel: string;
   restDuration: number;
   isActive?: boolean;
@@ -74,7 +69,7 @@ export function SetRow({
       setCompleted(true);
       toast.success(`Set ${setIndex + 1} logged successfully!`);
       if (onComplete) {
-        onComplete(exerciseIndex, setIndex, parsedWeight, parsedReps, restDuration);
+        onComplete(exerciseIndex, setIndex, weightNum, repsNum, restDuration);
       }
     } catch {
       toast.error("Network error. Please try again.");
