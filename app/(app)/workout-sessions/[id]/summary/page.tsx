@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { 
   Loader2, ArrowLeft, Calendar, Clock, Dumbbell, 
-  Trophy, Flame, Zap, Activity, BatteryMedium, Target
+  Trophy, Flame, Zap, Activity, BatteryMedium, Target,
+  TrendingUp, TrendingDown, Minus
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -17,8 +18,10 @@ import {
   calculateWorkoutQuality,
   aggregateSessionStimulus,
   calculateCalories,
+  getProgressionRecommendation,
+  ProgressionResult
 } from "@/lib/performance";
-
+import type { ProgressionExercise } from "@/lib/performance/progression";
 interface PerformedSet {
   weight: number;
   reps: number;
@@ -36,7 +39,8 @@ interface Exercise {
   order: number;
   performedSets: PerformedSet[];
   notes?: string;
-}
+  plannedRepRange?: { min: number; max: number };
+  previousExercise?: ProgressionExercise | null;}
 
 interface WorkoutSession {
   _id: string;
@@ -341,6 +345,18 @@ export default function WorkoutSummaryPage() {
         {session.exercises.map((exercise, index) => {
           const isCompleted = exercise.performedSets.some(set => set.completed);
           
+          let progression: ProgressionResult | null = null;
+          if (isCompleted && exercise.plannedRepRange) {
+             const mg = exercise.exerciseId?.muscleGroup?.toLowerCase() || "";
+             const isLowerBody = mg === "legs" || mg === "glutes" || mg === "calves";
+             progression = getProgressionRecommendation(
+                exercise.previousExercise || null,
+                exercise,
+                exercise.plannedRepRange,
+                isLowerBody
+             );
+          }
+          
           return (
             <Card key={index} className={!isCompleted ? "opacity-60 bg-muted/30" : "border-muted shadow-sm hover:border-primary/30 transition-colors"}>
               <CardHeader className="py-4 bg-muted/10">
@@ -396,6 +412,36 @@ export default function WorkoutSummaryPage() {
                     </div>
                   ))}
                 </div>
+                
+                {progression && (
+                  <div className="mt-4 pt-4 border-t border-muted/50">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Zap className="h-4 w-4 text-amber-500" />
+                      <h4 className="text-sm font-bold text-foreground">Progressive Overload</h4>
+                    </div>
+                    
+                    <div className={`p-4 rounded-xl border flex flex-col md:flex-row md:items-center gap-4 ${
+                      progression.recommendation === 'Increase' ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400' :
+                      progression.recommendation === 'Decrease' ? 'bg-orange-500/10 border-orange-500/20 text-orange-700 dark:text-orange-400' :
+                      'bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-400'
+                    }`}>
+                      <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-background/50 shadow-sm border border-black/5 dark:border-white/5">
+                        {progression.recommendation === 'Increase' && <TrendingUp className="h-6 w-6 text-green-500" />}
+                        {progression.recommendation === 'Decrease' && <TrendingDown className="h-6 w-6 text-orange-500" />}
+                        {progression.recommendation === 'Maintain' && <Minus className="h-6 w-6 text-blue-500" />}
+                      </div>
+                      
+                      <div className="flex-1">
+                        <div className="flex items-baseline space-x-2">
+                          <span className="font-bold text-lg">{progression.recommendation} Weight</span>
+                          <span className="text-sm opacity-80">Next Session:</span>
+                          <span className="font-black text-xl">{progression.suggestedWeight} kg</span>
+                        </div>
+                        <p className="text-sm mt-1 opacity-90 leading-snug">{progression.reason}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );

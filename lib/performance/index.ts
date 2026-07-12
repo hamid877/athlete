@@ -16,3 +16,5 @@ export {
   calculateWorkoutQuality,
   aggregateSessionStimulus
 } from './metrics';
+export * from './progression';
+

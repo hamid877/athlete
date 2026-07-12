@@ -23,3 +23,15 @@ export type WorkoutIntensity = 'light' | 'moderate' | 'vigorous';
  * Supported stimulus categories for muscle recovery estimation.
  */
 export type StimulusCategory = 'low' | 'moderate' | 'high' | 'extreme';
+
+export interface RepRange {
+  min: number;
+  max: number;
+}
+export interface ProgressionExercise {
+  performedSets: {
+    weight: number;
+    reps: number;
+    completed: boolean;
+  }[];
+}

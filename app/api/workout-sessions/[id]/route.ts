@@ -108,7 +108,7 @@ export async function GET(
     })
       .populate({
         path: "workoutId",
-        select: "name",
+        select: "name exercises",
       })
       .populate({
         path: "exercises.exerciseId",
@@ -122,6 +122,58 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    // Attach plannedRepRange and previousExercise to each exercise
+    const enhancedExercises = await Promise.all(
+      workoutSession.exercises.map(async (ex: (typeof workoutSession.exercises)[number]) => {
+        // 1. Find planned rep range
+        const workoutData = workoutSession.workoutId as {
+  exercises?: {
+    exerciseId: { toString(): string };
+    repRange: {
+      min: number;
+      max: number;
+    };
+  }[];
+};
+        const plannedEx = workoutData?.exercises?.find(
+          (
+  wEx: {
+    exerciseId: { toString(): string };
+    repRange: {
+      min: number;
+      max: number;
+    };
+  }
+) =>
+            wEx.exerciseId.toString() === ex.exerciseId._id.toString()
+        );
+        const plannedRepRange = plannedEx?.repRange || { min: 8, max: 12 };
+
+        // 2. Find previous performance
+        const prevSession = await WorkoutSession.findOne(
+          {
+            userId: session.user.id,
+            "exercises.exerciseId": ex.exerciseId._id,
+            startedAt: { $lt: workoutSession.startedAt },
+            status: "completed",
+          },
+          { "exercises.$": 1, startedAt: 1 }
+        )
+          .sort({ startedAt: -1 })
+          .lean();
+
+        const previousExercise = prevSession?.exercises?.[0] || null;
+
+        return {
+          ...ex,
+          plannedRepRange,
+          previousExercise,
+        };
+      })
+    );
+
+    workoutSession.exercises = enhancedExercises;
 
     return NextResponse.json(workoutSession);
   } catch (error) {
