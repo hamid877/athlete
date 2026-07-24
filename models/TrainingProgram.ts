@@ -35,13 +35,15 @@ export interface TrainingProgramDocument
 
   name: string;
 
-  splitType: SplitType;
+  splitType?: SplitType;
 
   isActive: boolean;
 
   workoutDays: WorkoutDay[];
 
   description?: string;
+
+  templateId?: mongoose.Types.ObjectId | null;
 
   isArchived: boolean;
 }
@@ -90,7 +92,9 @@ const trainingProgramSchema = new Schema(
     splitType: {
       type: String,
       enum: SPLIT_TYPES,
-      required: true,
+      required: function (this: TrainingProgramDocument) {
+        return !this.templateId;
+      },
     },
 
     isActive: {
@@ -101,6 +105,12 @@ const trainingProgramSchema = new Schema(
     isArchived: {
       type: Boolean,
       default: false,
+    },
+
+    templateId: {
+      type: Schema.Types.ObjectId,
+      ref: "ProgramTemplate",
+      default: null,
     },
 
     workoutDays: {

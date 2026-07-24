@@ -99,12 +99,14 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = session.user.id;
+
     const { id } = await params;
     await connectDB();
 
     const workoutSession = await WorkoutSession.findOne({
       _id: id,
-      userId: session.user.id,
+      userId: userId,
     })
       .populate({
         path: "workoutId",
@@ -153,7 +155,7 @@ export async function GET(
         // 2. Find previous performance
         const prevSession = await WorkoutSession.findOne(
           {
-            userId: session.user.id,
+            userId: userId,
             "exercises.exerciseId": ex.exerciseId._id,
             startedAt: { $lt: workoutSession.startedAt },
             status: "completed",

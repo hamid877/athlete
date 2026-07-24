@@ -28,6 +28,42 @@ export const RECOVERY_WINDOWS_HOURS = {
 } as const;
 
 /**
+ * Default full-recovery times (in hours) for each muscle group.
+ * Based on standard exercise science guidelines for natural athletes.
+ * These are the baseline times assuming a normally fatiguing stimulus.
+ */
+export const DEFAULT_RECOVERY_TIMES_HOURS: Record<string, number> = {
+  Chest: 48,
+  'Upper Chest': 48,
+  Back: 48,
+  Lats: 48,
+  'Front Delts': 36,
+  'Side Delts': 36,
+  'Rear Delts': 36,
+  Biceps: 24,
+  Triceps: 24,
+  Forearms: 24,
+  Core: 24,
+  Quads: 72,
+  Hamstrings: 72,
+  Glutes: 72,
+  Calves: 24,
+};
+
+/**
+ * Minimum raw fatigue score for a muscle to be considered meaningfully fatigued.
+ * Scores below this threshold are treated as no fatigue.
+ */
+export const FATIGUE_FLOOR = 0.01;
+
+/**
+ * Normalization cap for the raw fatigue formula (sets × avgWeight × avgReps).
+ * A score at or above this value maps to a full 0% initial recovery (maximum fatigue).
+ * Tuned for a typical heavy compound set: ~4 sets × 100 kg × 8 reps = 3200.
+ */
+export const FATIGUE_NORMALIZATION_CAP = 3200;
+
+/**
  * Default bodyweight (kg) used for calorie calculations if user weight is unknown.
  */
 export const DEFAULT_BODYWEIGHT_KG = 70;

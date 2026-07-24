@@ -88,6 +88,19 @@ const RECOMMENDED_GOAL = [
   "all",
 ];
 
+const SECONDARY_MUSCLE_ALIASES: Record<string, string> = {
+  core: "abs",
+  shoulders: "front_deltoids",
+  upper_back: "trapezius",
+  lats: "latissimus_dorsi",
+  arms: "biceps",
+  legs: "quadriceps",
+};
+
+const GOAL_ALIASES: Record<string, string> = {
+  mobility: "general_fitness",
+};
+
 interface RawExercise {
   name: string;
   slug: string;
@@ -3857,6 +3870,14 @@ console.log(`Total exercises compiled in generator: ${allExercises.length}`);
 
 for (const [idx, item] of allExercises.entries()) {
   const label = `Item #${idx + 1} (${item.name || "Unnamed"})`;
+
+  // Normalize common AI aliases before validation
+item.secondaryMuscles = item.secondaryMuscles.map(
+  (muscle) => SECONDARY_MUSCLE_ALIASES[muscle] ?? muscle
+);
+
+item.recommendedGoal =
+  GOAL_ALIASES[item.recommendedGoal] ?? item.recommendedGoal;
 
   if (!item.name) errors.push(`${label}: Missing 'name'`);
   if (!item.slug) {

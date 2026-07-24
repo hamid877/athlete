@@ -176,7 +176,7 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
           No exercises in this session.
         </p>
       ) : (
-        <div className="space-y-6 pb-24">
+        <div className={`space-y-6 ${isWorkoutComplete ? "pb-48" : "pb-24"}`}>
           {exercises.map((sessionEx, exerciseIndex) => {
             const plannedEx = workout.exercises.find(
               (e) => e.exerciseId.toString() === sessionEx.exerciseId?._id?.toString()
@@ -263,9 +263,9 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
         </div>
       )}
 
-      {/* Finish Workout Fixed Button */}
+      {/* Finish Workout Fixed Button — sits above the fixed bottom nav (bottom-16 ≈ 64px nav height) */}
       {isWorkoutComplete && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[var(--background)] to-transparent z-40 pb-safe">
+        <div className="fixed bottom-16 left-0 right-0 p-4 bg-gradient-to-t from-[var(--background)] to-transparent z-50">
           <Button
             className="w-full text-lg h-14 font-bold shadow-lg shadow-primary/20"
             size="lg"

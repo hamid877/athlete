@@ -34,6 +34,7 @@ interface Exercise {
     name: string;
     isCompound?: boolean;
     primaryMuscle?: string;
+    equipment?:string;
     muscleGroup?: string;
   } | null;
   order: number;
@@ -143,7 +144,25 @@ export default function WorkoutSummaryPage() {
 
   const volume = calculateTotalVolume(session.exercises);
   const totalSets = calculateTotalSets(session.exercises);
-  const calories = calculateCalories(durationMins, 75, "moderate"); // Using 75kg default for now
+const calorieExercises = session.exercises.map((exercise) => ({
+  isCompound: exercise.exerciseId?.isCompound ?? false,
+
+  isMachine:
+    exercise.exerciseId?.equipment?.toLowerCase() === "machine",
+
+  isBodyweight:
+    exercise.exerciseId?.equipment?.toLowerCase() === "bodyweight",
+
+  sets: exercise.performedSets.map((set) => ({
+    weight: set.weight,
+    reps: set.reps,
+  })),
+}));
+const calories = calculateCalories({
+  bodyweightKg: 75,
+  durationMinutes: durationMins,
+  exercises: calorieExercises,
+});
   
   const density = calculateTrainingDensity(volume, durationMins);
   const intensity = calculateSessionIntensity(totalSets, durationMins);

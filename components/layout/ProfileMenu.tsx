@@ -3,7 +3,7 @@
 import { useState, useTransition, useRef, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { updateProfile, type UpdateProfileInput } from "@/actions/profile.actions";
-import { LogOut, Settings, X, Loader2, Check, User, Sun, Moon } from "lucide-react";
+import { LogOut, Settings, X, Loader2, Check, User, Sun, Moon, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
@@ -177,6 +177,14 @@ export function ProfileMenu({ user }: ProfileMenuProps) {
 
             {/* actions */}
             <div className="py-1">
+              <a
+                href="/achievements"
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--background-subtle)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                <Trophy className="h-4 w-4 shrink-0 text-yellow-500" />
+                Achievements
+              </a>
+
               <button
                 onClick={() => { setDropdownOpen(false); setDrawerOpen(true); }}
                 className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--background-subtle)] hover:text-[var(--text-primary)] transition-colors"
