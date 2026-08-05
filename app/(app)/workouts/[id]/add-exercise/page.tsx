@@ -59,7 +59,7 @@ export default async function AddExercisePage({ params }: Props) {
       </div>
 
       {/* ─── Picker ─── */}
-      <ExercisePicker workoutId={id} exerciseCount={exerciseCount} />
+      <ExercisePicker workoutId={id} exerciseCount={exerciseCount} workoutName={workout.name} />
     </div>
   );
 }

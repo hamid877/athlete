@@ -154,6 +154,18 @@ if (workout) {
       }
     }
 
+    let isTodayWorkoutCompleted = false;
+    if (todayWorkout) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      isTodayWorkoutCompleted = completedSessions.some(
+        (sess) =>
+          sess.workoutId.toString() === todayWorkout._id &&
+          sess.finishedAt &&
+          new Date(sess.finishedAt) >= todayStart
+      );
+    }
+
     return NextResponse.json({
       user: {
         name: session.user.name,
@@ -170,6 +182,7 @@ if (workout) {
       },
       lastWorkout,
       todayWorkout,
+      isTodayWorkoutCompleted,
       activeSession,
     });
   } catch (error) {

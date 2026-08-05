@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { getRecommendedFilters } from "@/lib/workout-filters";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +26,7 @@ import {
 } from "@/components/workouts/MuscleGroupFilter";
 import { ExerciseCard } from "@/components/workouts/ExerciseCard";
 import { addExerciseSchema, type AddExerciseInput } from "@/validators/workout.schema";
-import type { ExerciseDocument } from "@/types";
+import type { ExerciseDocument, MuscleGroup, PrimaryMuscle } from "@/types";
 
 /* ─── Types ────────────────────────────────────────────────────── */
 
@@ -37,6 +39,7 @@ interface ExercisePickerProps {
   workoutId: string;
   /** Current number of exercises already in the workout (used for default order) */
   exerciseCount: number;
+  workoutName?: string;
 }
 
 /* ─── Default config values ─────────────────────────────────────── */
@@ -49,7 +52,7 @@ const CONFIG_DEFAULTS = {
 
 /* ─── Component ─────────────────────────────────────────────────── */
 
-export function ExercisePicker({ workoutId, exerciseCount }: ExercisePickerProps) {
+export function ExercisePicker({ workoutId, exerciseCount, workoutName }: ExercisePickerProps) {
   const router = useRouter();
 
   /* Fetch state */
@@ -59,6 +62,26 @@ export function ExercisePicker({ workoutId, exerciseCount }: ExercisePickerProps
   /* Filter / search state */
   const [search, setSearch] = useState("");
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroupFilter>("all");
+
+  /* Intelligent filters based on workout name */
+  const recommendedFilters = useMemo(() => {
+    if (!workoutName) return null;
+    return getRecommendedFilters(workoutName);
+  }, [workoutName]);
+
+  const [showAll, setShowAll] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem(`exercisePickerShowAll_${workoutId}`);
+      if (saved !== null) {
+        return saved === "true";
+      }
+    }
+    return !recommendedFilters;
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem(`exercisePickerShowAll_${workoutId}`, String(showAll));
+  }, [showAll, workoutId]);
 
   /* Config sheet state */
   const [selected, setSelected] = useState<ExerciseSummary | null>(null);
@@ -100,6 +123,21 @@ export function ExercisePicker({ workoutId, exerciseCount }: ExercisePickerProps
       setLoading(false);
     }
   }, [search, muscleGroup]);
+
+  /* ── Derived state ── */
+  const filteredExercises = useMemo(() => {
+    let result = exercises;
+
+    // If user is actively searching, bypass the intelligent filter to show all matches
+    if (!showAll && recommendedFilters && !search.trim()) {
+      result = result.filter(ex => 
+        recommendedFilters.muscleGroups.includes(ex.muscleGroup as MuscleGroup) ||
+        recommendedFilters.primaryMuscles.includes(ex.primaryMuscle as PrimaryMuscle)
+      );
+    }
+
+    return result;
+  }, [exercises, showAll, recommendedFilters, search]);
 
   useEffect(() => {
     const timer = setTimeout(fetchExercises, 250);
@@ -159,6 +197,16 @@ export function ExercisePicker({ workoutId, exerciseCount }: ExercisePickerProps
         />
       </div>
 
+      {/* ─── Intelligent Filter Toggle ────────────────────── */}
+      {recommendedFilters && (
+        <div className="flex items-center justify-between mb-4 px-1">
+          <Label htmlFor="show-all" className="text-sm font-medium text-[var(--text-secondary)]">
+            Show all exercises
+          </Label>
+          <Switch id="show-all" checked={showAll} onCheckedChange={setShowAll} />
+        </div>
+      )}
+
       {/* ─── Muscle group chips ──────────────────────────────── */}
       <div className="mb-4">
         <MuscleGroupFilterBar selected={muscleGroup} onChange={setMuscleGroup} />
@@ -179,17 +227,17 @@ export function ExercisePicker({ workoutId, exerciseCount }: ExercisePickerProps
               className="h-16 animate-pulse rounded-[var(--radius-md)] bg-[var(--background-subtle)]"
             />
           ))
-        ) : exercises.length === 0 ? (
-          <p className="py-10 text-center text-sm text-[var(--text-muted)]">
+        ) : filteredExercises.length === 0 ? (
+          <div className="py-12 text-center text-[var(--text-secondary)]">
             No exercises found.
-          </p>
+          </div>
         ) : (
-          exercises.map((ex) => (
+          filteredExercises.map((exercise) => (
             <ExerciseCard
-              key={ex._id}
-              exercise={ex}
-              selected={selected?._id === ex._id}
-              onClick={() => openConfig(ex)}
+              key={exercise._id}
+              exercise={exercise}
+              selected={selected?._id === exercise._id}
+              onClick={() => openConfig(exercise)}
             />
           ))
         )}

@@ -8,6 +8,7 @@ import type {
   Difficulty,
   RecommendedExperience,
   RecommendedGoal,
+  WeightInputType,
 } from "@/types";
 
 /* ─── Enum arrays (single source of truth) ──────────────────── */
@@ -71,6 +72,15 @@ const EQUIPMENT_VALUES: Equipment[] = [
   "suspension",
   "cardio_machine",
   "other",
+];
+
+const WEIGHT_INPUT_TYPES: WeightInputType[] = [
+  "TOTAL_WEIGHT",
+  "PER_DUMBBELL",
+  "MACHINE_STACK",
+  "PLATE_LOADED",
+  "BODYWEIGHT",
+  "BODYWEIGHT_PLUS",
 ];
 
 const EXERCISE_TYPES: ExerciseType[] = [
@@ -145,6 +155,12 @@ const exerciseSchema = new Schema<ExerciseDocument>(
       type: String,
       enum: EQUIPMENT_VALUES,
       required: true,
+    },
+    weightInputType: {
+      type: String,
+      enum: WEIGHT_INPUT_TYPES,
+      required: true,
+      default: "TOTAL_WEIGHT",
     },
     exerciseType: {
       type: String,

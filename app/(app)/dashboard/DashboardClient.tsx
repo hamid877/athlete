@@ -15,7 +15,10 @@ import {
 } from "lucide-react";
 import { MuscleStimulusCard } from "./MuscleStimulusCard";
 import { RecentPRsCard } from "./RecentPRsCard";
+import { GrowthIntelligenceCard } from "./GrowthIntelligenceCard";
 import type { StimulusAPIResponse } from "@/lib/types/api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/shared/empty-state";
 /* ── helpers ── */
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -166,6 +169,7 @@ interface DashboardData {
   activeSession: ActiveSession | null;
   lastWorkout: LastWorkout | null;
   todayWorkout: TodayWorkout | null;
+  isTodayWorkoutCompleted: boolean;
 }
 
 interface RecoveryMuscleFatigue {
@@ -262,16 +266,16 @@ export default function DashboardClient() {
   if (loading) {
     // Skeleton loader
     return (
-      <div className="flex flex-col gap-5 p-4 animate-pulse">
-        <div className="h-4 w-24 bg-[var(--border)] rounded-md mb-2"></div>
-        <div className="h-8 w-48 bg-[var(--border)] rounded-md mb-6"></div>
-        <div className="h-48 w-full bg-[var(--border)] rounded-2xl mb-6"></div>
+      <div className="flex flex-col gap-5 p-4">
+        <Skeleton className="h-4 w-24 mb-2" />
+        <Skeleton className="h-8 w-48 mb-6" />
+        <Skeleton className="h-48 w-full rounded-2xl mb-6" />
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="h-24 w-full bg-[var(--border)] rounded-2xl"></div>
-          <div className="h-24 w-full bg-[var(--border)] rounded-2xl"></div>
-          <div className="h-24 w-full bg-[var(--border)] rounded-2xl"></div>
+          <Skeleton className="h-24 w-full rounded-2xl" />
+          <Skeleton className="h-24 w-full rounded-2xl" />
+          <Skeleton className="h-24 w-full rounded-2xl" />
         </div>
-        <div className="h-32 w-full bg-[var(--border)] rounded-2xl mb-6"></div>
+        <Skeleton className="h-32 w-full rounded-2xl mb-6" />
       </div>
     );
   }
@@ -308,8 +312,6 @@ export default function DashboardClient() {
     ? [...recoveryData.muscles].sort((a, b) => a.recovery - b.recovery)
     : [];
 
-  const allRecovering = sortedMuscles.length > 0 && sortedMuscles.every(m => m.status === "Recovering");
-
   return (
     <div className="flex flex-col gap-5">
       {/* ── Greeting ── */}
@@ -320,6 +322,11 @@ export default function DashboardClient() {
         <h1 className="text-2xl font-bold text-[var(--text-primary)] leading-tight">
           {firstName} 👋
         </h1>
+      </section>
+
+      {/* ── Growth Intelligence ── */}
+      <section aria-label="Growth Intelligence">
+        <GrowthIntelligenceCard />
       </section>
 
       {/* ── Today's Recommendation Card ── */}
@@ -340,7 +347,35 @@ export default function DashboardClient() {
               )}
             </div>
 
-            {recoveryError || !recoveryData ? (
+            {activeSession ? (
+              // State 2: Active workout exists
+              <div>
+                <h3 className="text-xl font-bold mb-1">{activeSession.workoutName}</h3>
+                <p className="text-sm text-white/80 mb-4">You have a workout in progress.</p>
+                <Link
+                  href={`/workout-sessions/${activeSession._id}`}
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-[var(--primary)] transition-all hover:bg-white/90 active:scale-[0.98]"
+                >
+                  <Play className="h-4 w-4 fill-current" />
+                  Resume Workout
+                </Link>
+              </div>
+            ) : data?.isTodayWorkoutCompleted && todayWorkout ? (
+              // State 3: Today's planned workout completed
+              <div>
+                <h3 className="text-xl font-bold mb-1">Workout Completed</h3>
+                <p className="text-sm text-white/80 mb-4">
+                  Great job! Focus on recovery for the remainder of the day.
+                </p>
+                <Link
+                  href="/programs"
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-white/20 px-5 text-sm font-bold text-white backdrop-blur-sm transition-all hover:bg-white/30 active:scale-[0.98]"
+                >
+                  View Programs
+                </Link>
+              </div>
+            ) : recoveryError || !recoveryData ? (
+              // Fallback: Error state
               <div>
                 <h3 className="text-xl font-bold mb-1">Recommendation Unavailable</h3>
                 <p className="text-sm text-white/80 mb-4">Unable to load recovery data.</p>
@@ -352,42 +387,14 @@ export default function DashboardClient() {
                   View Programs
                 </Link>
               </div>
-            ) : allRecovering ? (
-              <div>
-                <h3 className="text-xl font-bold mb-1">Recovery Day</h3>
-                <p className="text-sm text-white/80 mb-4">{recoveryData.recommendation.reason}</p>
-                {activeSession ? (
-                  <Link
-                    href={`/workout-sessions/${activeSession._id}`}
-                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-[var(--primary)] transition-all hover:bg-white/90 active:scale-[0.98]"
-                  >
-                    <Play className="h-4 w-4 fill-current" />
-                    Resume Workout
-                  </Link>
-                ) : (
-                  <Link
-                    href="/programs"
-                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-white/20 px-5 text-sm font-bold text-white backdrop-blur-sm transition-all hover:bg-white/30 active:scale-[0.98]"
-                  >
-                    View Programs
-                  </Link>
-                )}
-              </div>
             ) : (
+              // State 1: No workout started today
               <div>
                 <h3 className="text-xl font-bold mb-1">{recoveryData.recommendation.workout}</h3>
                 <p className="text-sm text-white/80 mb-4">
                   {recoveryData.recommendation.reason}
                 </p>
-                {activeSession ? (
-                  <Link
-                    href={`/workout-sessions/${activeSession._id}`}
-                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-[var(--primary)] transition-all hover:bg-white/90 active:scale-[0.98]"
-                  >
-                    <Play className="h-4 w-4 fill-current" />
-                    Resume Workout
-                  </Link>
-                ) : todayWorkout ? (
+                {todayWorkout ? (
                   <Link
                     href={`/workouts/${todayWorkout._id}`}
                     className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-[var(--primary)] transition-all hover:bg-white/90 active:scale-[0.98]"
@@ -562,9 +569,12 @@ export default function DashboardClient() {
             <p className="text-sm text-red-500">Unable to load recovery data.</p>
           </div>
         ) : !recoveryData || sortedMuscles.length === 0 ? (
-          <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] p-5 text-center">
-            <p className="text-sm text-[var(--text-muted)]">No recovery data available yet.</p>
-          </div>
+          <EmptyState
+            icon={<Activity className="h-4 w-4" />}
+            title="No recovery data"
+            description="No recovery data available yet."
+            className="p-4 py-8"
+          />
         ) : (
           <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] p-4 flex flex-col gap-4">
             {sortedMuscles.map((muscle) => {
@@ -615,9 +625,12 @@ export default function DashboardClient() {
             <p className="text-sm text-red-500">Unable to load volume data.</p>
           </div>
         ) : !volumeData || volumeData.muscles.length === 0 ? (
-          <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] p-5 text-center">
-            <p className="text-sm text-[var(--text-muted)]">No volume data available yet. Complete workouts to see analysis.</p>
-          </div>
+          <EmptyState
+            icon={<Target className="h-4 w-4" />}
+            title="No volume data"
+            description="Complete workouts to see analysis."
+            className="p-4 py-8"
+          />
         ) : (
           <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] p-4 flex flex-col gap-4">
             {volumeData.muscles.map((muscle) => {

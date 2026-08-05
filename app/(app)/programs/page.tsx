@@ -4,7 +4,9 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Plus, Activity } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Plus, Activity, AlertCircle } from "lucide-react";
 
 interface Program {
   _id: string;
@@ -29,11 +31,8 @@ export default function ProgramsPage() {
         const data = await res.json();
         setPrograms(data);
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("An unexpected error occurred.");
-        }
+        console.error("Failed to load programs", err);
+        setError("Failed to load programs. Please try again later.");
       } finally {
         setIsLoading(false);
       }
@@ -72,26 +71,25 @@ export default function ProgramsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-32 w-full" />
+          ))}
         </div>
       ) : error ? (
-        <div className="text-center py-12 text-destructive">
-          <p>{error}</p>
-        </div>
+        <EmptyState
+          icon={<AlertCircle className="h-6 w-6 text-destructive" />}
+          title="Error"
+          description={error}
+        />
       ) : programs.length === 0 ? (
-        <div className="text-center py-16 px-4 border border-dashed rounded-lg bg-muted/20">
-          <h2 className="text-xl font-semibold mb-2">No programs yet</h2>
-          <p className="text-muted-foreground mb-6">
-            Create your first training program to get started.
-          </p>
-          <Button asChild variant="outline">
-            <Link href="/programs/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Program
-            </Link>
-          </Button>
-        </div>
+        <EmptyState
+          icon={<Activity className="h-6 w-6" />}
+          title="No programs yet"
+          description="Create your first training program to get started."
+          actionLabel="Create Program"
+          actionHref="/programs/create"
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {programs.map((program) => (

@@ -15,6 +15,8 @@ import {
   Play
 } from "lucide-react";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/shared/empty-state";
 
 import type {
   AchievementsResponse,
@@ -107,8 +109,15 @@ export default function AchievementsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="container mx-auto p-4 md:p-8 mt-16 max-w-6xl space-y-12">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-48 bg-white/10" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-40 w-full bg-white/10 rounded-2xl" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -133,9 +142,11 @@ const locked: LockedAchievement[] = data?.locked ?? [];
           Unlocked ({unlocked.length})
         </h2>
         {unlocked.length === 0 ? (
-          <div className="p-8 text-center rounded-2xl bg-white/5 border border-white/10">
-            <p className="text-gray-400">You haven&apos;t unlocked any achievements yet. Keep training!</p>
-          </div>
+          <EmptyState
+            icon={<Trophy className="h-6 w-6" />}
+            title="No achievements yet"
+            description="You haven't unlocked any achievements yet. Keep training!"
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {unlocked.map((ach: UnlockedAchievement)=> (

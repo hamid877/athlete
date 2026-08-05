@@ -60,7 +60,7 @@ export default async function WorkoutSessionPage({ params }: Props) {
     })
     .populate({
       path: "exercises.exerciseId",
-      select: "name equipment primaryMuscle",
+      select: "name equipment primaryMuscle weightInputType",
     })
     .lean();
 

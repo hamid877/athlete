@@ -4,8 +4,11 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Plus, Calendar, Clock, Dumbbell } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Plus, Calendar, Clock, Dumbbell, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
+import { calculateSetVolume } from "@/lib/performance/volume";
 
 interface PerformedSet {
   weight: number;
@@ -14,7 +17,7 @@ interface PerformedSet {
 }
 
 interface Exercise {
-  exerciseId: { _id: string; name: string } | string;
+  exerciseId: { _id: string; name: string; weightInputType?: string } | string;
   order: number;
   performedSets: PerformedSet[];
 }
@@ -44,11 +47,8 @@ export default function WorkoutHistoryPage() {
         const data = await res.json();
         setSessions(data);
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("An unexpected error occurred.");
-        }
+        console.error("Failed to load workout history", err);
+        setError("Failed to load workout history. Please try again later.");
       } finally {
         setIsLoading(false);
       }
@@ -71,7 +71,11 @@ export default function WorkoutHistoryPage() {
     exercises.forEach((ex) => {
       ex.performedSets.forEach((set) => {
         if (set.completed) {
-          volume += set.weight * set.reps;
+          const weightInputType =
+            typeof ex.exerciseId === "object" && ex.exerciseId !== null
+              ? ex.exerciseId.weightInputType
+              : undefined;
+          volume += calculateSetVolume(set.weight, set.reps, weightInputType);
         }
       });
     });
@@ -107,26 +111,25 @@ export default function WorkoutHistoryPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-48 w-full" />
+          ))}
         </div>
       ) : error ? (
-        <div className="text-center py-12 text-destructive">
-          <p>{error}</p>
-        </div>
+        <EmptyState
+          icon={<AlertCircle className="h-6 w-6 text-destructive" />}
+          title="Error"
+          description={error}
+        />
       ) : sessions.length === 0 ? (
-        <div className="text-center py-16 px-4 border border-dashed rounded-lg bg-muted/20">
-          <h2 className="text-xl font-semibold mb-2">No completed workouts yet</h2>
-          <p className="text-muted-foreground mb-6">
-            Start logging your training to build your history.
-          </p>
-          <Button asChild variant="outline">
-            <Link href="/programs">
-              <Plus className="mr-2 h-4 w-4" />
-              Start Workout
-            </Link>
-          </Button>
-        </div>
+        <EmptyState
+          icon={<Clock className="h-6 w-6" />}
+          title="No completed workouts yet"
+          description="Start logging your training to build your history."
+          actionLabel="Start Workout"
+          actionHref="/programs"
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {sessions.map((session) => (

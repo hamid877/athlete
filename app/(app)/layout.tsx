@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
+import WorkoutSession from "@/models/WorkoutSession";
 import { ProfileMenu } from "@/components/layout/ProfileMenu";
 import { BottomNav } from "@/components/layout/BottomNav";
 
@@ -22,6 +23,16 @@ export default async function AppLayout({
   if (!dbUser || !dbUser.profileCompleted) {
     redirect("/about-myself");
   }
+
+  // Resolve the active session ID so the Workout tab links directly to the
+  // live session page instead of always routing through the /workouts hub.
+  const activeSessionDoc = await WorkoutSession.findOne(
+    { userId: session.user.id, status: "in_progress" },
+    { _id: 1 },
+  )
+    .sort({ startedAt: -1 })
+    .lean();
+  const activeSessionId = activeSessionDoc ? String(activeSessionDoc._id) : null;
 
   const profileData = {
     name: dbUser.name,
@@ -77,7 +88,7 @@ export default async function AppLayout({
       </main>
 
       {/* ─── Bottom Navigation ─── */}
-      <BottomNav />
+      <BottomNav activeSessionId={activeSessionId} />
     </div>
   );
 }

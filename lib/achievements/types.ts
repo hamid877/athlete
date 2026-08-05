@@ -10,6 +10,7 @@ export interface Achievement {
   description: string;
 
   icon: string;
+  category: 'milestones' | 'consistency' | 'volume' | 'dedication';
   tier: AchievementTier;
 
   target: number;

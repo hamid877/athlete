@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import WorkoutSession from "@/models/WorkoutSession";
+import Exercise from "@/models/exercise.model";
+import { calculateSetVolume } from "@/lib/performance/volume";
 import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
 
@@ -34,6 +36,9 @@ export async function GET(
       .sort({ startedAt: 1 }) // Chronological order
       .lean();
 
+    const exercise = await Exercise.findById(id).select("weightInputType").lean();
+    const weightInputType = exercise?.weightInputType;
+
     const history = workoutSessions.map((ws) => {
       // Find the specific exercise within the session
       const exerciseData = ws.exercises.find(
@@ -53,7 +58,7 @@ export async function GET(
         if (!set.completed) return;
         
         maxWeight = Math.max(maxWeight, set.weight);
-        volume += set.weight * set.reps;
+        volume += calculateSetVolume(set.weight, set.reps, weightInputType);
 
         // Calculate 1RM using Brzycki formula: Weight × (36 / (37 - Reps))
         let set1RM = set.weight;

@@ -5,6 +5,7 @@ export interface ExerciseSummaryDTO {
   name: string;
   equipment: string;
   primaryMuscle: string;
+  weightInputType?: string;
 }
 
 export interface PlannedExerciseDTO {
@@ -51,6 +52,7 @@ export type LeanExercise = {
   name: string;
   equipment: string;
   primaryMuscle: string;
+  weightInputType?: string;
 };
 
 export type LeanWorkoutExercise = {
@@ -94,14 +96,14 @@ export type PopulatedLeanWorkoutSession = {
 export function serializeWorkoutSession(rawSession: PopulatedLeanWorkoutSession): WorkoutSessionDTO {
   let workoutDto: PopulatedWorkoutDTO | null = null;
   
-  if (rawSession.workoutId && typeof rawSession.workoutId === "object" && "_id" in rawSession.workoutId) {
+  if (rawSession.workoutId && typeof rawSession.workoutId === "object" && "name" in rawSession.workoutId) {
     const workout = rawSession.workoutId as LeanWorkout;
     workoutDto = {
       _id: workout._id.toString(),
       name: workout.name,
       exercises: workout.exercises.map((ex) => {
-        const exIdStr = ex.exerciseId && typeof ex.exerciseId === "object" && "_id" in ex.exerciseId
-            ? ex.exerciseId._id.toString()
+        const exIdStr = ex.exerciseId && typeof ex.exerciseId === "object" && "name" in ex.exerciseId
+            ? (ex.exerciseId as LeanExercise)._id.toString()
             : ex.exerciseId?.toString() || "";
 
         return {
@@ -128,13 +130,14 @@ export function serializeWorkoutSession(rawSession: PopulatedLeanWorkoutSession)
     exercises: rawSession.exercises.map((exercise) => {
       let exerciseSummary: ExerciseSummaryDTO | null = null;
 
-      if (exercise.exerciseId && typeof exercise.exerciseId === "object" && "_id" in exercise.exerciseId) {
+      if (exercise.exerciseId && typeof exercise.exerciseId === "object" && "name" in exercise.exerciseId) {
         const exSummary = exercise.exerciseId as LeanExercise;
         exerciseSummary = {
           _id: exSummary._id.toString(),
           name: exSummary.name,
           equipment: exSummary.equipment,
           primaryMuscle: exSummary.primaryMuscle,
+          weightInputType: exSummary.weightInputType,
         };
       }
 

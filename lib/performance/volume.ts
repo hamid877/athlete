@@ -1,4 +1,5 @@
 import { WorkoutSet, CompletedWorkout, MuscleVolume, VolumeStatus } from './types';
+import type { WeightInputType } from '@/types';
 
 // Target constants for weekly volume
 export const VOLUME_TARGETS = {
@@ -80,4 +81,30 @@ export function calculateWorkoutVolume(sets: WorkoutSet[]): number {
     
     return totalVolume + (weight * reps);
   }, 0);
+}
+
+/**
+ * Calculates the true volume of a single set based on the exercise's weightInputType.
+ */
+export function calculateSetVolume(
+  weight: number,
+  reps: number,
+  weightInputType?: string,
+  bodyweightKg: number = 75
+): number {
+  if (!weightInputType) return weight * reps;
+  
+  switch (weightInputType as WeightInputType) {
+    case "PER_DUMBBELL":
+      return (weight * 2) * reps;
+    case "BODYWEIGHT":
+      return bodyweightKg * reps;
+    case "BODYWEIGHT_PLUS":
+      return (bodyweightKg + weight) * reps;
+    case "TOTAL_WEIGHT":
+    case "MACHINE_STACK":
+    case "PLATE_LOADED":
+    default:
+      return weight * reps;
+  }
 }

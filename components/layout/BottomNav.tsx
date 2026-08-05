@@ -4,16 +4,27 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Dumbbell, TrendingUp, Apple, Target } from "lucide-react";
 
-const navItems = [
-  { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/workouts", label: "Workout", icon: Dumbbell },
-  { href: "/progress", label: "Progress", icon: TrendingUp },
-  { href: "/nutrition", label: "Nutrition", icon: Apple },
-  { href: "/goals", label: "Goals", icon: Target },
-];
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean | "true" | "false" }>;
+}
 
-export function BottomNav() {
+interface BottomNavProps {
+  /** ID of the current in-progress workout session, or null when none exists. */
+  activeSessionId: string | null;
+}
+
+export function BottomNav({ activeSessionId }: BottomNavProps) {
   const pathname = usePathname();
+
+  const navItems: NavItem[] = [
+    { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+    { href: activeSessionId ? `/workout-sessions/${activeSessionId}` : "/workouts", label: "Workout", icon: Dumbbell },
+    { href: "/progress", label: "Progress", icon: TrendingUp },
+    { href: "/nutrition", label: "Nutrition", icon: Apple },
+    { href: "/goals", label: "Goals", icon: Target },
+  ];
 
   return (
     <nav
@@ -25,7 +36,9 @@ export function BottomNav() {
           const isActive =
             href === "/dashboard"
               ? pathname === "/dashboard"
-              : pathname.startsWith(href);
+              : label === "Workout"
+                ? pathname.startsWith("/workouts") || pathname.startsWith("/workout-sessions")
+                : pathname.startsWith(href);
 
           return (
             <Link

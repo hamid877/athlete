@@ -174,6 +174,14 @@ export type WorkoutSplit =
   | "full_body"
   | "cardio";
 
+export type WeightInputType =
+  | "TOTAL_WEIGHT"
+  | "PER_DUMBBELL"
+  | "MACHINE_STACK"
+  | "PLATE_LOADED"
+  | "BODYWEIGHT"
+  | "BODYWEIGHT_PLUS";
+
 export interface ExerciseDocument {
   _id: Types.ObjectId;
   /** Human-readable name, e.g. "Barbell Back Squat" */
@@ -189,6 +197,8 @@ export interface ExerciseDocument {
   secondaryMuscles: PrimaryMuscle[];
   /** Required equipment */
   equipment: Equipment;
+  /** Format for entering weight (e.g. per dumbbell, total, machine) */
+  weightInputType: WeightInputType;
   /** Training stimulus / exercise category */
   exerciseType: ExerciseType;
   /** Technical difficulty */

@@ -13,6 +13,20 @@ interface SetRowProps {
   restDuration: number;
   isActive?: boolean;
   onComplete?: (exIdx: number, setIdx: number, weight: number, reps: number, restSeconds: number) => void;
+  weightInputType?: string;
+}
+
+function getWeightLabel(type?: string): string {
+  switch (type) {
+    case "PER_DUMBBELL": return "Weight (each dumbbell)";
+    case "MACHINE_STACK": return "Machine weight";
+    case "BODYWEIGHT_PLUS": return "Additional weight";
+    case "BODYWEIGHT": return "Bodyweight";
+    case "PLATE_LOADED": return "Plate weight";
+    case "TOTAL_WEIGHT":
+    default:
+      return "Weight (total)";
+  }
 }
 
 export function SetRow({
@@ -24,7 +38,9 @@ export function SetRow({
   restDuration,
   isActive,
   onComplete,
+  weightInputType,
 }: SetRowProps) {
+  const weightLabel = getWeightLabel(weightInputType);
   const [weight, setWeight] = useState(
     initialSet.completed ? String(initialSet.weight) : ""
   );
@@ -108,7 +124,10 @@ export function SetRow({
         </span>
 
         <div className="flex items-center gap-2 ml-auto">
-          <div className="flex items-center gap-1">
+          <div className="flex flex-col">
+            <label htmlFor={`weight-input-${exerciseIndex}-${setIndex}`} className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1 pl-1">
+              {weightLabel}
+            </label>
             <input
               id={`weight-input-${exerciseIndex}-${setIndex}`}
               type="number"

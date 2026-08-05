@@ -5,6 +5,9 @@ import Link from "next/link";
 import { Search, Filter, Dumbbell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/shared/empty-state";
+import { AlertCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -51,6 +54,7 @@ const EQUIPMENT = [
 export default function ExercisesPage() {
   const [exercises, setExercises] = useState<ExerciseDocument[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [muscleGroup, setMuscleGroup] = useState<string>("all");
   const [equipment, setEquipment] = useState<string>("all");
@@ -68,8 +72,9 @@ export default function ExercisesPage() {
         if (!res.ok) throw new Error("Failed to fetch exercises");
         const data = await res.json();
         setExercises(data);
-      } catch (error) {
-        console.error(error);
+      } catch (err) {
+        console.error("Failed to load exercises", err);
+        setError("Failed to load exercises. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -136,19 +141,25 @@ export default function ExercisesPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-32 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] animate-pulse" />
+            <Skeleton key={i} className="h-32 w-full" />
           ))}
         </div>
+      ) : error ? (
+        <EmptyState
+          icon={<AlertCircle className="h-6 w-6 text-destructive" />}
+          title="Error"
+          description={error}
+        />
       ) : exercises.length === 0 ? (
-        <div className="text-center py-20 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)]">
-          <Dumbbell className="h-12 w-12 mx-auto text-[var(--text-muted)] mb-4 opacity-50" />
-          <h3 className="text-lg font-medium text-[var(--text-primary)]">No exercises found</h3>
-          <p className="text-[var(--text-muted)]">Try adjusting your search or filters.</p>
-        </div>
+        <EmptyState
+          icon={<Dumbbell className="h-6 w-6" />}
+          title="No exercises found"
+          description="Try adjusting your filters or search query."
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {exercises.map((exercise) => (
-            <Link key={exercise._id} href={`/exercises/${exercise._id}`}>
+            <Link key={exercise._id.toString()} href={`/exercises/${exercise._id}`}>
               <Card className="h-full hover:border-[var(--border-hover)] transition-colors cursor-pointer group bg-[var(--surface)]">
                 <CardHeader className="p-4 pb-2">
                   <div className="flex items-start justify-between">

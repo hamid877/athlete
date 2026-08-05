@@ -1,4 +1,5 @@
 import { WorkoutSessionDTO } from "../serializers/workoutSession";
+import { calculateSetVolume } from "./volume";
 
 export type RecordType =
   | "heaviest_weight"
@@ -82,7 +83,7 @@ export function calculatePersonalRecords(
         const reps = set.reps;
 
         // Session Volume
-        sessionVolume += weight * reps;
+        sessionVolume += calculateSetVolume(weight, reps, sessionExercise.exerciseId?.weightInputType);
 
         // Heaviest Weight
         if (weight > stats.maxWeight.weight) {

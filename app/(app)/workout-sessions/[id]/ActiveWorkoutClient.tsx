@@ -46,7 +46,7 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
 
   exercises.forEach((sessionEx, exIdx) => {
     const plannedEx = workout.exercises.find(
-      (e) => e.exerciseId.toString() === sessionEx.exerciseId?._id?.toString()
+      (e) => e.exerciseId.toString() === sessionEx.exerciseId?._id?.toString() && e.order === sessionEx.order
     );
     const plannedSetsCount = plannedEx?.sets || 0;
     const actualSetsCount = Math.max(plannedSetsCount, sessionEx.performedSets.length);
@@ -128,8 +128,11 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
       return newExercises;
     });
 
-    // Start timer
-    if (restSeconds > 0) {
+    const isLastSet = totalCompletedSets + 1 >= totalPlannedSets;
+
+    if (isLastSet) {
+      handleFinishWorkout();
+    } else if (restSeconds > 0) {
       setRestTimer({ active: true, remaining: restSeconds });
     } else {
       // If no rest time, just focus next set
@@ -140,8 +143,10 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
   const handleFinishWorkout = async () => {
     try {
       setIsFinishing(true);
-      const res = await fetch(`/api/workout-sessions/${session._id}/finish`, {
+      const res = await fetch(`/api/workout-sessions/${session._id}`, {
         method: "PATCH",
+        body: JSON.stringify({ action: "finish" }),
+        headers: { "Content-Type": "application/json" }
       });
       if (!res.ok) {
         const data = await res.json();
@@ -179,7 +184,7 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
         <div className={`space-y-6 ${isWorkoutComplete ? "pb-48" : "pb-24"}`}>
           {exercises.map((sessionEx, exerciseIndex) => {
             const plannedEx = workout.exercises.find(
-              (e) => e.exerciseId.toString() === sessionEx.exerciseId?._id?.toString()
+              (e) => e.exerciseId.toString() === sessionEx.exerciseId?._id?.toString() && e.order === sessionEx.order
             );
 
             const repRangeLabel = plannedEx
@@ -230,6 +235,7 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
                           restDuration={restDuration}
                           isActive={isActive}
                           onComplete={handleSetComplete}
+                          weightInputType={sessionEx.exerciseId?.weightInputType}
                         />
                       );
                     })}

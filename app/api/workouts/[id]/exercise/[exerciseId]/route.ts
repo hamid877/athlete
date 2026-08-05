@@ -92,7 +92,7 @@ export async function PATCH(
         await workout.save();
         await workout.populate({
           path: "exercises.exerciseId",
-          select: "name equipment primaryMuscle",
+          select: "name equipment primaryMuscle weightInputType",
         });
       }
 
@@ -209,7 +209,7 @@ await workout.save();
 
     await workout.populate({
   path: "exercises.exerciseId",
-  select: "name equipment primaryMuscle",
+  select: "name equipment primaryMuscle weightInputType",
 });
 
 return NextResponse.json(workout);

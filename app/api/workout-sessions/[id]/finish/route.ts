@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import WorkoutSession from "@/models/WorkoutSession";
-
+import { calculateSetVolume } from "@/lib/performance/volume";
+import { generateGrowthAnalysis } from "@/actions/growth-intelligence";
+import { saveGrowthSnapshot } from "@/lib/growth-intelligence";
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -20,7 +22,9 @@ export async function PATCH(
     const workoutSession = await WorkoutSession.findOne({
       _id: id,
       userId: userSession.user.id,
-    }).populate("workoutId");
+    })
+      .populate("workoutId")
+      .populate("exercises.exerciseId");
 
     if (!workoutSession) {
       return NextResponse.json(
@@ -60,7 +64,7 @@ export async function PATCH(
 
     workoutSession.exercises.forEach(
       (sessionEx: {
-        exerciseId: { toString(): string };
+        exerciseId: { toString(): string; weightInputType?: string };
         performedSets: { completed: boolean; weight?: number; reps?: number }[];
       }) => {
         let completedSetsCount = 0;
@@ -69,7 +73,12 @@ export async function PATCH(
           if (set.completed) {
             totalCompletedSets++;
             completedSetsCount++;
-            totalVolume += (set.weight || 0) * (set.reps || 0);
+            const weightInputType = sessionEx.exerciseId?.weightInputType;
+            totalVolume += calculateSetVolume(
+              set.weight || 0,
+              set.reps || 0,
+              weightInputType
+            );
           }
         });
 
@@ -84,12 +93,27 @@ export async function PATCH(
       }
     );
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       duration,
       totalCompletedSets,
       totalVolume,
       completedExercises
     }, { status: 200 });
+    
+    // Asynchronously trigger Growth Intelligence generation
+    // We don't await it here so we don't block the client response
+    const userId = userSession.user.id;
+    (async () => {
+      try {
+        const analysisResult = await generateGrowthAnalysis(userId);
+        await saveGrowthSnapshot(userId, analysisResult);
+        console.log(`Growth snapshot saved for user ${userId}`);
+      } catch (err) {
+        console.error("Failed to generate growth analysis:", err);
+      }
+    })();
+
+    return response;
   } catch (error) {
     console.error("Finish workout error:", error);
     return NextResponse.json(

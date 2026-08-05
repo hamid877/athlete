@@ -3,6 +3,8 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import WorkoutSession from "@/models/WorkoutSession";
+import { buildGrowthAnalysisInput } from "@/lib/growth-intelligence/input-builder";
+import { analyzeGrowth, saveGrowthSnapshot } from "@/lib/growth-intelligence";
 
 const logSetSchema = z.object({
   exerciseIndex: z.number().int().min(0),
@@ -10,6 +12,15 @@ const logSetSchema = z.object({
   weight: z.number().min(0, "Weight must be ≥ 0"),
   reps: z.number().int().min(1, "Reps must be > 0"),
 });
+
+const patchRequestSchema = z.union([
+  z.object({
+    action: z.literal("finish"),
+  }),
+  logSetSchema.extend({
+    action: z.literal("log_set").optional(),
+  })
+]);
 
 export async function PATCH(
   request: Request,
@@ -24,7 +35,7 @@ export async function PATCH(
     const { id } = await params;
 
     const body = await request.json();
-    const parsed = logSetSchema.safeParse(body);
+    const parsed = patchRequestSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -33,14 +44,10 @@ export async function PATCH(
       );
     }
 
-    const { exerciseIndex, setIndex, weight, reps } = parsed.data;
-
-    await connectDB();
-
     const workoutSession = await WorkoutSession.findOne({
       _id: id,
       userId: userSession.user.id,
-    });
+    }).populate("workoutId").populate("exercises.exerciseId");
 
     if (!workoutSession) {
       return NextResponse.json(
@@ -48,6 +55,55 @@ export async function PATCH(
         { status: 404 }
       );
     }
+
+    if (parsed.data.action === "finish") {
+      if (workoutSession.status !== "in_progress") {
+        return NextResponse.json(
+          { error: "Session is not in progress" },
+          { status: 400 }
+        );
+      }
+
+      const finishedAt = new Date();
+      const duration = Math.floor(
+        (finishedAt.getTime() - workoutSession.startedAt.getTime()) / 1000
+      );
+
+      workoutSession.status = "completed";
+      workoutSession.finishedAt = finishedAt;
+      workoutSession.duration = duration;
+
+      await workoutSession.save();
+
+      // ── Fire-and-forget: generate and persist a growth snapshot ──────────
+      // This is intentionally non-blocking — the finish response is returned
+      // immediately. Errors in the analysis pipeline are caught and logged
+      // without affecting the workout completion flow.
+      const userId = userSession.user.id;
+      Promise.resolve()
+        .then(async () => {
+          const input = await buildGrowthAnalysisInput(userId, 8);
+          const result = analyzeGrowth(input);
+          // Only persist when the engine has enough data to produce meaningful scores.
+          if (!result.meta.insufficientData) {
+            await saveGrowthSnapshot(userId, result);
+          }
+        })
+        .catch((err: unknown) => {
+          console.error("[growth-intelligence] snapshot generation failed:", err);
+        });
+
+      // We can use the existing volume module calculation if needed,
+
+      // but returning success is enough for the frontend navigation.
+      return NextResponse.json({
+        duration,
+        status: "completed"
+      }, { status: 200 });
+    }
+
+    // Handle log_set action
+    const { exerciseIndex, setIndex, weight, reps } = parsed.data;
 
     const exercise = workoutSession.exercises[exerciseIndex];
     if (!exercise) {
@@ -114,7 +170,7 @@ export async function GET(
       })
       .populate({
         path: "exercises.exerciseId",
-        select: "name isCompound primaryMuscle muscleGroup",
+        select: "name isCompound primaryMuscle muscleGroup weightInputType equipment",
       })
       .lean();
 
@@ -132,6 +188,7 @@ export async function GET(
         const workoutData = workoutSession.workoutId as {
   exercises?: {
     exerciseId: { toString(): string };
+    order: number;
     repRange: {
       min: number;
       max: number;
@@ -140,15 +197,13 @@ export async function GET(
 };
         const plannedEx = workoutData?.exercises?.find(
           (
-  wEx: {
-    exerciseId: { toString(): string };
-    repRange: {
-      min: number;
-      max: number;
-    };
-  }
-) =>
-            wEx.exerciseId.toString() === ex.exerciseId._id.toString()
+            wEx: {
+              exerciseId: { toString(): string };
+              order: number;
+              repRange: { min: number; max: number };
+            }
+          ) =>
+            wEx.exerciseId.toString() === ex.exerciseId._id.toString() && wEx.order === ex.order
         );
         const plannedRepRange = plannedEx?.repRange || { min: 8, max: 12 };
 

@@ -90,6 +90,10 @@ export async function GET(req: Request) {
         path: "workoutId",
         select: "name",
       })
+      .populate({
+        path: "exercises.exerciseId",
+        select: "name weightInputType",
+      })
       .lean();
 
     return NextResponse.json(workoutSessions);
