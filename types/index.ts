@@ -9,8 +9,8 @@ export type ActivityLevel =
   | "very_active";
 export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
 export type UnitPreference = "metric" | "imperial";
-export type GoalType = "weight" | "bodyFat" | "strength" | "nutrition" | "habit";
-export type GoalStatus = "active" | "achieved" | "abandoned";
+export type GoalType = "weight" | "bodyFat" | "strength" | "nutrition" | "habit" | "muscle_growth" | "consistency";
+export type GoalStatus = "active" | "achieved" | "archived";
 
 export interface NutritionTargets {
   calories: number;
@@ -64,6 +64,7 @@ export interface GoalDocument {
   targetValue: number;
   currentValue: number;
   unit: string;
+  startDate: Date;
   targetDate?: Date;
   status: GoalStatus;
   createdAt: Date;
