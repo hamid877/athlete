@@ -49,7 +49,7 @@ export default async function ProgressPage() {
 
       <GrowthTrajectory 
         history={data.history!} 
-        forecast={data.forecast} 
+        forecast={data.forecast || null} 
       />
 
       <MuscleIntelligence 
