@@ -77,7 +77,7 @@ const PRIORITY_ORDER: Record<InsightPriority, number> = {
  *   trend = 'improving'     → trend:    "Consistency trend is improving week over week."
  *   trend = 'declining'     → trend:    "Consistency is declining — recent weeks are below your average."
  */
-function consistencyInsights(score: ScoreDetail): Insight[] {
+export function consistencyInsights(score: ScoreDetail): Insight[] {
   const insights: Insight[] = [];
   const { value, trend, confidenceLevel } = score;
 
@@ -139,7 +139,7 @@ function consistencyInsights(score: ScoreDetail): Insight[] {
  *   trend = 'improving'     → trend:    "Strength trend is accelerating over recent sessions."
  *   trend = 'declining'     → trend:    "Strength trend is weakening — address the stall before it compounds."
  */
-function progressiveOverloadInsights(score: ScoreDetail): Insight[] {
+export function progressiveOverloadInsights(score: ScoreDetail): Insight[] {
   const insights: Insight[] = [];
   const { value, trend, confidenceLevel } = score;
 
@@ -205,7 +205,7 @@ function progressiveOverloadInsights(score: ScoreDetail): Insight[] {
  *   trend = 'improving'     → trend:    "Weekly volume is increasing — positive training stimulus."
  *   trend = 'declining'     → trend:    "Weekly volume is dropping — monitor for under-training."
  */
-function weeklyVolumeInsights(score: ScoreDetail): Insight[] {
+export function weeklyVolumeInsights(score: ScoreDetail): Insight[] {
   const insights: Insight[] = [];
   const { value, trend, confidenceLevel } = score;
 
@@ -271,7 +271,7 @@ function weeklyVolumeInsights(score: ScoreDetail): Insight[] {
  *   trend = 'improving'     → trend:    "Recovery trend is improving — better fatigue management."
  *   trend = 'declining'     → trend:    "Recovery trend is declining — accumulated fatigue is rising."
  */
-function recoveryInsights(score: ScoreDetail): Insight[] {
+export function recoveryInsights(score: ScoreDetail): Insight[] {
   const insights: Insight[] = [];
   const { value, trend, confidenceLevel } = score;
 
@@ -336,7 +336,7 @@ function recoveryInsights(score: ScoreDetail): Insight[] {
  *   value < 50                               → warning:  "Calorie or protein intake may be limiting growth."
  *   value < 30                               → critical: "Nutrition is significantly limiting your ability to grow."
  */
-function nutritionInsights(score: ScoreDetail): Insight[] {
+export function nutritionInsights(score: ScoreDetail): Insight[] {
   const insights: Insight[] = [];
   const { value, confidenceLevel } = score;
 
@@ -390,7 +390,7 @@ function nutritionInsights(score: ScoreDetail): Insight[] {
  *   value < 50    → warning:  "Multiple growth factors need attention."
  *   value < 30    → critical: "Critical gaps are blocking your growth potential."
  */
-function overallInsights(score: ScoreDetail): Insight[] {
+export function overallInsights(score: ScoreDetail): Insight[] {
   const insights: Insight[] = [];
   const { value } = score;
 

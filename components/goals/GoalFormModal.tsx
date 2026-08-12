@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createGoalSchema, updateGoalSchema } from "@/validators/goal.schema";
 import { GoalDocument } from "@/types";
+import { GoalIntelligence } from "./GoalIntelligence";
 
 interface GoalFormModalProps {
   isOpen: boolean;
@@ -100,6 +101,8 @@ export function GoalFormModal({ isOpen, onClose, goal, onSave }: GoalFormModalPr
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
           
+          {isEditing && goal && <GoalIntelligence goalId={goal._id.toString()} />}
+
           <div className="space-y-2">
             <Label htmlFor="type">Goal Type</Label>
             <Select 

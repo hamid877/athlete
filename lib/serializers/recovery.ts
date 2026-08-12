@@ -66,7 +66,7 @@ const PRIMARY_MUSCLE_TO_CANONICAL: Record<string, string> = {
  * Falls back to a title-cased version of the slug when no mapping exists,
  * ensuring the value is always a non-empty string.
  */
-function toCanonicalMuscle(slug: string): string {
+export function toCanonicalMuscle(slug: string): string {
   return (
     PRIMARY_MUSCLE_TO_CANONICAL[slug] ??
     slug
