@@ -19,14 +19,22 @@ export async function POST(req: Request) {
     const user = await User.findByIdAndUpdate(
       session.user.id,
       { nutritionTargets: validatedData },
-      { new: true }
-    );
+      { returnDocument: "after" }
+    ).lean();
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(user.nutritionTargets);
+    const targets = user.nutritionTargets;
+    const responseData = targets ? {
+      calories: targets.calories,
+      protein: targets.protein,
+      carbs: targets.carbs,
+      fat: targets.fat
+    } : null;
+
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("Error updating nutrition targets:", error);
     if (error instanceof z.ZodError) {

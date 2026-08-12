@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createGoalSchema, updateGoalSchema } from "@/validators/goal.schema";
 import { GoalDocument } from "@/types";
 import { GoalIntelligence } from "./GoalIntelligence";
+import { SUPPORTED_MUSCLES } from "@/lib/growth-intelligence/muscle-analysis.service";
 
 interface GoalFormModalProps {
   isOpen: boolean;
@@ -53,6 +54,8 @@ export function GoalFormModal({ isOpen, onClose, goal, onSave }: GoalFormModalPr
       status: goal?.status || "active",
       startDate: goal?.startDate ? new Date(goal.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       targetDate: goal?.targetDate ? new Date(goal.targetDate).toISOString().split('T')[0] : "",
+      exerciseId: goal?.exerciseId || "",
+      muscle: goal?.muscle || "",
     },
   });
 
@@ -70,12 +73,32 @@ export function GoalFormModal({ isOpen, onClose, goal, onSave }: GoalFormModalPr
         status: goal?.status || "active",
         startDate: goal?.startDate ? new Date(goal.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         targetDate: goal?.targetDate ? new Date(goal.targetDate).toISOString().split('T')[0] : "",
+        exerciseId: goal?.exerciseId || "",
+        muscle: goal?.muscle || "",
       });
     }
   }, [isOpen, goal, reset]);
 
   const currentUnit = useWatch({ control: form.control, name: "unit" }) as string;
   const currentStatus = useWatch({ control: form.control, name: "status" }) as string;
+  const currentMuscle = useWatch({ control: form.control, name: "muscle" }) as string;
+  const currentExerciseId = useWatch({ control: form.control, name: "exerciseId" }) as string;
+  
+  const [exercises, setExercises] = useState<{ _id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    if (currentType === 'strength' && isOpen && exercises.length === 0) {
+      fetch('/api/exercises')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setExercises(data);
+          }
+        })
+        .catch(err => console.error("Failed to load exercises:", err));
+    }
+  }, [currentType, isOpen, exercises.length]);
+
   useEffect(() => {
     if (!isOpen) return;
     const allowedUnits = unitMapping[currentType];
@@ -129,6 +152,48 @@ export function GoalFormModal({ isOpen, onClose, goal, onSave }: GoalFormModalPr
             <Input id="title" {...register("title")} placeholder="e.g. Bench Press 100kg" />
             {errors.title && <p className="text-sm text-red-500">{errors.title.message as string}</p>}
           </div>
+
+          {currentType === 'strength' && (
+            <div className="space-y-2">
+              <Label htmlFor="exerciseId">Exercise</Label>
+              <Select 
+                value={currentExerciseId} 
+                onValueChange={(val) => setValue("exerciseId", val)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select an exercise" />
+                </SelectTrigger>
+                <SelectContent>
+                  {exercises.map((ex) => (
+                    <SelectItem key={ex._id} value={ex._id}>
+                      {ex.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.exerciseId && <p className="text-sm text-red-500">{errors.exerciseId.message as string}</p>}
+            </div>
+          )}
+
+          {currentType === 'muscle_growth' && (
+            <div className="space-y-2">
+              <Label htmlFor="muscle">Muscle</Label>
+              <Select 
+                value={currentMuscle} 
+                onValueChange={(val) => setValue("muscle", val)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select muscle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_MUSCLES.map((m) => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.muscle && <p className="text-sm text-red-500">{errors.muscle.message as string}</p>}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

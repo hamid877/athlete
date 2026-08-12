@@ -121,6 +121,22 @@ export async function syncGoal(goal: GoalDocument): Promise<void> {
       needsUpdate = true;
     }
 
+    let isAchieved = false;
+    const initial = goal.initialValue !== undefined ? goal.initialValue : goal.currentValue;
+
+    if (initial < goal.targetValue) {
+      isAchieved = newValue >= goal.targetValue;
+    } else if (initial > goal.targetValue) {
+      isAchieved = newValue <= goal.targetValue;
+    } else {
+      isAchieved = newValue === goal.targetValue;
+    }
+
+    if (isAchieved && goal.status !== "achieved") {
+      updatePayload.status = "achieved";
+      needsUpdate = true;
+    }
+
     if (needsUpdate) {
       await Goal.updateOne(
         { _id: goal._id },

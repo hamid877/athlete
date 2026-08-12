@@ -33,18 +33,19 @@ const unitMapping = {
   consistency: z.enum(["workouts", "workouts/week", "days/week"]),
 };
 
-export const createGoalSchema = z
-  .object({
-    type: GoalTypeEnum,
-    title: baseGoalSchema.shape.title,
-    targetValue: baseGoalSchema.shape.targetValue,
-    currentValue: baseGoalSchema.shape.currentValue,
-    startDate: baseGoalSchema.shape.startDate,
-    targetDate: baseGoalSchema.shape.targetDate,
-    unit: z.string(),
-    exerciseId: z.string().optional(),
-    muscle: z.string().optional(),
-  })
+const goalObjectSchema = z.object({
+  type: GoalTypeEnum,
+  title: baseGoalSchema.shape.title,
+  targetValue: baseGoalSchema.shape.targetValue,
+  currentValue: baseGoalSchema.shape.currentValue,
+  startDate: baseGoalSchema.shape.startDate,
+  targetDate: baseGoalSchema.shape.targetDate,
+  unit: z.string(),
+  exerciseId: z.string().optional(),
+  muscle: z.string().optional(),
+});
+
+export const createGoalSchema = goalObjectSchema
   .superRefine((data, ctx) => {
     const allowedUnitsSchema = unitMapping[data.type as keyof typeof unitMapping];
     if (allowedUnitsSchema) {
@@ -84,7 +85,7 @@ export const createGoalSchema = z
 
 export type CreateGoalInput = z.infer<typeof createGoalSchema>;
 
-export const updateGoalSchema = createGoalSchema
+export const updateGoalSchema = goalObjectSchema
   .partial()
   .extend({
     status: z.enum(["active", "achieved", "archived"]).optional(),
