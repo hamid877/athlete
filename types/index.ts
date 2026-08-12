@@ -63,6 +63,7 @@ export interface GoalDocument {
   title: string;
   targetValue: number;
   currentValue: number;
+  initialValue?: number;
   unit: string;
   startDate: Date;
   targetDate?: Date;

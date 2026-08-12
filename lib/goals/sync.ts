@@ -108,10 +108,23 @@ export async function syncGoal(goal: GoalDocument): Promise<void> {
         break;
     }
 
+    const updatePayload: Record<string, unknown> = {};
+    let needsUpdate = false;
+
     if (newValue !== goal.currentValue) {
+      updatePayload.currentValue = newValue;
+      needsUpdate = true;
+    }
+
+    if (goal.initialValue === undefined) {
+      updatePayload.initialValue = newValue;
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
       await Goal.updateOne(
         { _id: goal._id },
-        { $set: { currentValue: newValue } }
+        { $set: updatePayload }
       );
     }
   } catch (error) {

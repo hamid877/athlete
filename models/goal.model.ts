@@ -16,6 +16,7 @@ const goalSchema = new Schema<GoalDocument>(
     title: { type: String, required: true, trim: true },
     targetValue: { type: Number, required: true },
     currentValue: { type: Number, default: 0 },
+    initialValue: { type: Number },
     unit: { type: String, required: true },
     startDate: { type: Date, default: Date.now },
     targetDate: { type: Date },
