@@ -136,7 +136,7 @@ export function SetRow({
               placeholder="0"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
-              disabled={loading}
+              disabled={loading || !isActive}
               aria-label={`Set ${setIndex + 1} weight in kg`}
               className="w-16 text-sm text-center px-2 py-1.5 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] disabled:opacity-50"
             />
@@ -151,7 +151,7 @@ export function SetRow({
               placeholder="0"
               value={reps}
               onChange={(e) => setReps(e.target.value)}
-              disabled={loading}
+              disabled={loading || !isActive}
               aria-label={`Set ${setIndex + 1} reps`}
               className="w-14 text-sm text-center px-2 py-1.5 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] disabled:opacity-50"
             />
@@ -160,7 +160,7 @@ export function SetRow({
 
           <button
             onClick={handleComplete}
-            disabled={loading}
+            disabled={loading || !isActive}
             aria-label={`Complete set ${setIndex + 1}`}
             className="text-sm font-medium px-3 py-1.5 rounded-[var(--radius-sm)] bg-[var(--primary)] text-white hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >

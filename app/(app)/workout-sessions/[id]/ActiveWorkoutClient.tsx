@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { SetRow } from "./SetRow";
 import { WorkoutSessionDTO, PopulatedWorkoutDTO } from "@/lib/serializers/workoutSession";
+import { useRestTimer } from "@/hooks/useRestTimer";
 
 interface ActiveWorkoutClientProps {
   session: WorkoutSessionDTO;
@@ -27,20 +28,15 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
   );
   const router = useRouter();
   const [isFinishing, setIsFinishing] = useState(false);
-  
-  // Timer state
-  const [restTimer, setRestTimer] = useState<{ active: boolean; remaining: number }>({
-    active: false,
-    remaining: 0,
-  });
+  const [skippedExercises, setSkippedExercises] = useState<Set<number>>(new Set());
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  // Completed sessions must never show editable UI or the Finish button.
+  // The server page already redirects completed sessions to /summary, but
+  // this guard provides a belt-and-suspenders safety net.
+  const isSessionCompleted = session.status === "completed";
 
-  // Compute progress
   let totalPlannedSets = 0;
   let totalCompletedSets = 0;
-
-  // Compute active set index
   let firstIncompleteExercise = -1;
   let firstIncompleteSet = -1;
 
@@ -50,64 +46,57 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
     );
     const plannedSetsCount = plannedEx?.sets || 0;
     const actualSetsCount = Math.max(plannedSetsCount, sessionEx.performedSets.length);
-    
-    totalPlannedSets += actualSetsCount;
-    
-    sessionEx.performedSets.forEach((set, setIdx) => {
-      if (set.completed) {
-        totalCompletedSets++;
-      } else if (firstIncompleteExercise === -1) {
-        firstIncompleteExercise = exIdx;
-        firstIncompleteSet = setIdx;
-      }
-    });
+    const isSkipped = skippedExercises.has(exIdx);
 
-    // If there are implicit unlogged planned sets
-    if (firstIncompleteExercise === -1 && sessionEx.performedSets.length < actualSetsCount) {
+    if (isSkipped) {
+      // Only count completed sets towards planned & completed
+      sessionEx.performedSets.forEach((set) => {
+        if (set.completed) {
+          totalCompletedSets++;
+          totalPlannedSets++;
+        }
+      });
+    } else {
+      totalPlannedSets += actualSetsCount;
+      sessionEx.performedSets.forEach((set, setIdx) => {
+        if (set.completed) {
+          totalCompletedSets++;
+        } else if (firstIncompleteExercise === -1) {
+          firstIncompleteExercise = exIdx;
+          firstIncompleteSet = setIdx;
+        }
+      });
+
+      // Implicit unlogged planned sets
+      if (firstIncompleteExercise === -1 && sessionEx.performedSets.length < actualSetsCount) {
         firstIncompleteExercise = exIdx;
         firstIncompleteSet = sessionEx.performedSets.length;
+      }
     }
   });
 
   const progressPercent = totalPlannedSets > 0 ? Math.min(100, Math.round((totalCompletedSets / totalPlannedSets) * 100)) : 0;
-  const isWorkoutComplete = totalPlannedSets > 0 && totalCompletedSets >= totalPlannedSets;
+  const isWorkoutComplete = exercises.length > 0 && firstIncompleteExercise === -1;
+
+  // ── Stable focus helper (reads latest indices via ref, no stale closure) ────
+  const focusDataRef = useRef({ firstIncompleteExercise, firstIncompleteSet });
+  useEffect(() => {
+    focusDataRef.current = { firstIncompleteExercise, firstIncompleteSet };
+  });
 
   const focusNextSet = useCallback(() => {
-    // Small timeout to ensure DOM is ready
+    // Small timeout to ensure the DOM has updated.
     setTimeout(() => {
-      if (firstIncompleteExercise !== -1 && firstIncompleteSet !== -1) {
-        const inputId = `weight-input-${firstIncompleteExercise}-${firstIncompleteSet}`;
-        const input = document.getElementById(inputId);
-        if (input) {
-          input.focus();
-        }
+      const { firstIncompleteExercise: exIdx, firstIncompleteSet: setIdx } = focusDataRef.current;
+      if (exIdx !== -1 && setIdx !== -1) {
+        const input = document.getElementById(`weight-input-${exIdx}-${setIdx}`);
+        input?.focus();
       }
     }, 100);
-  }, [firstIncompleteExercise, firstIncompleteSet]);
+  }, []);
 
-  const handleTimerEnd = useCallback(() => {
-    setRestTimer({ active: false, remaining: 0 });
-    focusNextSet();
-  }, [focusNextSet]);
-
-  // Handle timer
-  useEffect(() => {
-    if (restTimer.active && restTimer.remaining > 0) {
-      timerRef.current = setTimeout(() => {
-        setRestTimer((prev) => {
-          if (prev.remaining <= 1) return { active: false, remaining: 0 };
-          return { ...prev, remaining: prev.remaining - 1 };
-        });
-
-        if (restTimer.remaining === 1) {
-          focusNextSet();
-        }
-      }, 1000);
-    }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [restTimer, focusNextSet]);
+  // ── Rest timer (wall-clock-based, survives backgrounding) ───────────────────
+  const timer = useRestTimer(focusNextSet);
 
 
 
@@ -117,12 +106,12 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
     setExercises((prev) => {
       const newExercises = [...prev];
       const newSets = [...(newExercises[exIdx].performedSets || [])];
-      
+
       // Ensure the array is large enough if we are completing an uninitialized set
       while (newSets.length <= setIdx) {
         newSets.push({ weight: 0, reps: 0, completed: false });
       }
-      
+
       newSets[setIdx] = { ...newSets[setIdx], weight, reps, completed: true };
       newExercises[exIdx] = { ...newExercises[exIdx], performedSets: newSets };
       return newExercises;
@@ -133,14 +122,23 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
     if (isLastSet) {
       handleFinishWorkout();
     } else if (restSeconds > 0) {
-      setRestTimer({ active: true, remaining: restSeconds });
+      const exerciseId = exercises[exIdx].exerciseId?._id?.toString() ?? "";
+      timer.start(restSeconds, {
+        workoutSessionId: session._id,
+        exerciseId,
+        setIndex: setIdx,
+      });
     } else {
-      // If no rest time, just focus next set
+      // No rest time — move straight to next set
       focusNextSet();
     }
   };
 
   const handleFinishWorkout = async () => {
+    // Guard: if the session is already completed (e.g. a second tap before
+    // the router.push resolves), navigate to summary without a network call.
+    if (isSessionCompleted || isFinishing) return;
+
     try {
       setIsFinishing(true);
       const res = await fetch(`/api/workout-sessions/${session._id}`, {
@@ -149,13 +147,12 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
         headers: { "Content-Type": "application/json" }
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to finish workout");
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error ?? "Failed to finish workout");
       }
       router.push(`/workout-sessions/${session._id}/summary`);
     } catch (error) {
-      console.error(error);
-      alert("Error finishing workout");
+      console.error("[handleFinishWorkout]", error);
       setIsFinishing(false);
     }
   };
@@ -199,16 +196,31 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
 
             return (
               <Card key={`${sessionEx.exerciseId?._id ?? exerciseIndex}`} className="overflow-hidden">
-                <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--background-subtle)]">
-                  <p className="font-semibold text-[var(--text-primary)]">
-                    {sessionEx.exerciseId?.name ?? "Unknown exercise"}
-                  </p>
-                  {plannedEx && (
-                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-[var(--text-secondary)]">
-                      <span>{plannedEx.sets} sets</span>
-                      <span>{plannedEx.repRange.min}–{plannedEx.repRange.max} reps</span>
-                      <span>{formatRest(plannedEx.rest)} rest</span>
-                    </div>
+                <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--background-subtle)] flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold text-[var(--text-primary)]">
+                      {sessionEx.exerciseId?.name ?? "Unknown exercise"}
+                    </p>
+                    {plannedEx && (
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-[var(--text-secondary)]">
+                        <span>{plannedEx.sets} sets</span>
+                        <span>{plannedEx.repRange.min}–{plannedEx.repRange.max} reps</span>
+                        <span>{formatRest(plannedEx.rest)} rest</span>
+                      </div>
+                    )}
+                  </div>
+                  {!skippedExercises.has(exerciseIndex) && !isWorkoutComplete && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setSkippedExercises(prev => new Set(prev).add(exerciseIndex))}
+                      className="text-[var(--text-muted)] hover:text-[var(--text-primary)] -mr-2"
+                    >
+                      Skip
+                    </Button>
+                  )}
+                  {skippedExercises.has(exerciseIndex) && (
+                    <span className="text-xs font-medium text-[var(--text-muted)] mt-1">Skipped</span>
                   )}
                 </div>
 
@@ -252,16 +264,16 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
       )}
 
       {/* Rest Timer Toast / Sticky Footer */}
-      {restTimer.active && (
+      {timer.active && (
         <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 bg-[var(--surface)] border-2 border-[var(--primary)] rounded-[var(--radius-lg)] shadow-2xl p-4 flex flex-col items-center justify-center animate-in slide-in-from-bottom-5 fade-in z-50">
           <p className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
             Rest Timer
           </p>
           <div className="text-5xl font-black text-[var(--primary)] tabular-nums my-2 tracking-tight">
-            {restTimer.remaining}
+            {timer.remainingSeconds}
           </div>
           <button
-            onClick={handleTimerEnd}
+            onClick={timer.skip}
             className="mt-2 text-sm font-medium px-4 py-2 rounded-full bg-[var(--background-subtle)] hover:bg-[var(--background-hover)] text-[var(--text-primary)] transition-colors"
           >
             Skip Rest
@@ -270,7 +282,7 @@ export function ActiveWorkoutClient({ session, workout }: ActiveWorkoutClientPro
       )}
 
       {/* Finish Workout Fixed Button — sits above the fixed bottom nav (bottom-16 ≈ 64px nav height) */}
-      {isWorkoutComplete && (
+      {isWorkoutComplete && !isSessionCompleted && (
         <div className="fixed bottom-16 left-0 right-0 p-4 bg-gradient-to-t from-[var(--background)] to-transparent z-50">
           <Button
             className="w-full text-lg h-14 font-bold shadow-lg shadow-primary/20"

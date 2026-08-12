@@ -12,6 +12,13 @@ export type UnitPreference = "metric" | "imperial";
 export type GoalType = "weight" | "bodyFat" | "strength" | "nutrition" | "habit";
 export type GoalStatus = "active" | "achieved" | "abandoned";
 
+export interface NutritionTargets {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
 export interface UserDocument {
   _id: Types.ObjectId;
   name: string;
@@ -34,6 +41,7 @@ export interface UserDocument {
   workoutLocation?: "gym" | "home";
   injuries?: string;
   medicalConditions?: string;
+  nutritionTargets?: NutritionTargets;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -74,6 +82,18 @@ export interface OnboardingData {
   goalTitle: string;
   goalTargetValue: number;
   goalUnit: string;
+}
+
+export interface DailyNutritionDocument {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  dateString: string; // Format: YYYY-MM-DD
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /* ─── Exercise ──────────────────────────────────────────────── */

@@ -1,5 +1,5 @@
 
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import WorkoutSession from "@/models/WorkoutSession";
@@ -76,6 +76,14 @@ const serializedSession = serializeWorkoutSession(rawSession as unknown as Popul
 
 if (!serializedSession.workoutId) {
   notFound();
+}
+
+// Completed (and cancelled) sessions are read-only — always send users to
+// the summary view so the editable workout UI is never shown for a finished
+// session. This also ensures the BottomNav link re-evaluates on the next
+// navigation after revalidatePath clears the RSC cache.
+if (serializedSession.status !== "in_progress") {
+  redirect(`/workout-sessions/${id}/summary`);
 }
 
 const serializedWorkout = serializedSession.workoutId;

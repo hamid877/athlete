@@ -1,15 +1,15 @@
-import { Construction } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import NutritionClient from "./NutritionClient";
 
-export default function NutritionPage() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--primary-subtle)]">
-        <Construction className="h-7 w-7 text-[var(--primary)]" />
-      </div>
-      <div>
-        <h1 className="text-lg font-bold text-[var(--text-primary)]">Nutrition</h1>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">Coming soon — log meals and track macros here.</p>
-      </div>
-    </div>
-  );
+export const metadata = {
+  title: "Nutrition | Athlete",
+  description: "Track your daily nutrition and macros.",
+};
+
+export default async function NutritionPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  return <NutritionClient />;
 }

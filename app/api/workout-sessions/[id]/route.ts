@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
@@ -57,6 +58,16 @@ export async function PATCH(
     }
 
     if (parsed.data.action === "finish") {
+      // Idempotent: if the session was already completed (e.g. the user pressed
+      // Finish twice before the redirect landed), treat it as a success so the
+      // client never sees an error toast or alert.
+      if (workoutSession.status === "completed") {
+        return NextResponse.json(
+          { status: "completed", alreadyCompleted: true },
+          { status: 200 }
+        );
+      }
+
       if (workoutSession.status !== "in_progress") {
         return NextResponse.json(
           { error: "Session is not in progress" },
@@ -74,6 +85,10 @@ export async function PATCH(
       workoutSession.duration = duration;
 
       await workoutSession.save();
+
+      // Invalidate the RSC layout cache so the next navigation re-runs the
+      // layout server component, clearing activeSessionId from BottomNav.
+      revalidatePath("/", "layout");
 
       // ── Fire-and-forget: generate and persist a growth snapshot ──────────
       // This is intentionally non-blocking — the finish response is returned
@@ -93,12 +108,9 @@ export async function PATCH(
           console.error("[growth-intelligence] snapshot generation failed:", err);
         });
 
-      // We can use the existing volume module calculation if needed,
-
-      // but returning success is enough for the frontend navigation.
       return NextResponse.json({
         duration,
-        status: "completed"
+        status: "completed",
       }, { status: 200 });
     }
 

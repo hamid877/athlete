@@ -45,6 +45,12 @@ const userSchema = new Schema<UserDocument>(
     workoutLocation: { type: String, enum: ["gym", "home"], default: null },
     injuries: { type: String, default: null },
     medicalConditions: { type: String, default: null },
+    nutritionTargets: {
+      calories: { type: Number, default: null },
+      protein: { type: Number, default: null },
+      carbs: { type: Number, default: null },
+      fat: { type: Number, default: null },
+    },
   },
   {
     timestamps: true,
