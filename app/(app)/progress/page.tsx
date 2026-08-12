@@ -44,6 +44,7 @@ export default async function ProgressPage() {
         growthIndex={data.growthIndex!} 
         confidence={data.confidence!} 
         velocity={data.velocity!} 
+        trend={data.coachAnalysis!.weeklySummary.trend}
       />
 
       <GrowthTrajectory 
@@ -56,7 +57,7 @@ export default async function ProgressPage() {
       />
 
       <CoachInsights 
-        coachAnalysis={data.coachAnalysis} 
+        coachAnalysis={data.coachAnalysis!} 
       />
     </div>
   );

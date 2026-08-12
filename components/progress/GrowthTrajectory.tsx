@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface GrowthTrajectoryProps {
-  history: any[];
-  forecast: any;
+  history: unknown[];
+  forecast: unknown;
 }
 
 export function GrowthTrajectory({ history, forecast }: GrowthTrajectoryProps) {
@@ -15,6 +15,10 @@ export function GrowthTrajectory({ history, forecast }: GrowthTrajectoryProps) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">Placeholder for Trajectory Chart (Milestone 3)</p>
+          <div className="hidden">
+            {Array.isArray(history) && history.length}
+            {forecast ? 'true' : 'false'}
+          </div>
         </CardContent>
       </Card>
     </div>
