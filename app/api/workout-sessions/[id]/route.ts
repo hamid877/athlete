@@ -6,6 +6,7 @@ import { connectDB } from "@/lib/db";
 import WorkoutSession from "@/models/WorkoutSession";
 import { buildGrowthAnalysisInput } from "@/lib/growth-intelligence/input-builder";
 import { analyzeGrowth, saveGrowthSnapshot } from "@/lib/growth-intelligence";
+import { syncGoalsForUser } from "@/lib/goals/sync";
 
 const logSetSchema = z.object({
   exerciseIndex: z.number().int().min(0),
@@ -97,11 +98,23 @@ export async function PATCH(
       const userId = userSession.user.id;
       Promise.resolve()
         .then(async () => {
+          try {
+            await syncGoalsForUser(userId, "workout_completed");
+          } catch (err) {
+            console.error("Failed to sync goals for workout completion:", err);
+          }
+
           const input = await buildGrowthAnalysisInput(userId, 8);
           const result = analyzeGrowth(input);
           // Only persist when the engine has enough data to produce meaningful scores.
           if (!result.meta.insufficientData) {
             await saveGrowthSnapshot(userId, result);
+            
+            try {
+              await syncGoalsForUser(userId, "growth_analyzed");
+            } catch (err) {
+              console.error("Failed to sync goals for growth analysis:", err);
+            }
           }
         })
         .catch((err: unknown) => {
