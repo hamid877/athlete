@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SUPPORTED_MUSCLES } from "@/lib/growth-intelligence/muscle-analysis.service";
 
 const GoalTypeEnum = z.enum([
   "weight",
@@ -28,8 +29,8 @@ const unitMapping = {
   strength: z.enum(["kg", "lbs"]),
   nutrition: z.enum(["kcal", "g"]),
   habit: z.enum(["days/week", "times/week"]),
-  muscle_growth: z.enum(["cm", "in"]),
-  consistency: z.enum(["workouts/week", "days/week"]),
+  muscle_growth: z.enum(["score"]),
+  consistency: z.enum(["workouts", "workouts/week", "days/week"]),
 };
 
 export const createGoalSchema = z
@@ -41,6 +42,8 @@ export const createGoalSchema = z
     startDate: baseGoalSchema.shape.startDate,
     targetDate: baseGoalSchema.shape.targetDate,
     unit: z.string(),
+    exerciseId: z.string().optional(),
+    muscle: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     const allowedUnitsSchema = unitMapping[data.type as keyof typeof unitMapping];
@@ -51,6 +54,29 @@ export const createGoalSchema = z
           code: z.ZodIssueCode.custom,
           message: `Invalid unit for goal type ${data.type}. Expected one of: ${allowedUnitsSchema.options.join(", ")}`,
           path: ["unit"],
+        });
+      }
+    }
+    if (data.type === "strength" && !data.exerciseId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "exerciseId is required for strength goals",
+        path: ["exerciseId"],
+      });
+    }
+
+    if (data.type === "muscle_growth") {
+      if (!data.muscle) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "muscle is required for muscle_growth goals",
+          path: ["muscle"],
+        });
+      } else if (!SUPPORTED_MUSCLES.includes(data.muscle)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid muscle. Expected one of: ${SUPPORTED_MUSCLES.join(", ")}`,
+          path: ["muscle"],
         });
       }
     }
@@ -75,6 +101,24 @@ export const updateGoalSchema = createGoalSchema
             path: ["unit"],
           });
         }
+      }
+    }
+
+    if (data.type === "strength" && data.exerciseId === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "exerciseId is required for strength goals",
+        path: ["exerciseId"],
+      });
+    }
+
+    if (data.type === "muscle_growth" && data.muscle !== undefined) {
+      if (!SUPPORTED_MUSCLES.includes(data.muscle)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid muscle. Expected one of: ${SUPPORTED_MUSCLES.join(", ")}`,
+          path: ["muscle"],
+        });
       }
     }
   });

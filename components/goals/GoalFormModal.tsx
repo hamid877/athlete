@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -55,8 +55,8 @@ export function GoalFormModal({ isOpen, onClose, goal, onSave }: GoalFormModalPr
     },
   });
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors, isSubmitting } } = form;
-  const currentType = watch("type") as keyof typeof unitMapping;
+  const { register, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } = form;
+  const currentType = useWatch({ control: form.control, name: "type" }) as keyof typeof unitMapping;
 
   useEffect(() => {
     if (isOpen) {
@@ -73,7 +73,8 @@ export function GoalFormModal({ isOpen, onClose, goal, onSave }: GoalFormModalPr
     }
   }, [isOpen, goal, reset]);
 
-  const currentUnit = watch("unit") as string;
+  const currentUnit = useWatch({ control: form.control, name: "unit" }) as string;
+  const currentStatus = useWatch({ control: form.control, name: "status" }) as string;
   useEffect(() => {
     if (!isOpen) return;
     const allowedUnits = unitMapping[currentType];
@@ -136,7 +137,7 @@ export function GoalFormModal({ isOpen, onClose, goal, onSave }: GoalFormModalPr
             <div className="space-y-2">
               <Label htmlFor="unit">Unit</Label>
               <Select 
-                value={watch("unit") as string} 
+                value={currentUnit} 
                 onValueChange={(val) => setValue("unit", val)}
               >
                 <SelectTrigger className="w-full">
@@ -176,7 +177,7 @@ export function GoalFormModal({ isOpen, onClose, goal, onSave }: GoalFormModalPr
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select 
-                value={watch("status") as string} 
+                value={currentStatus} 
                 onValueChange={(val) => setValue("status", val)}
               >
                 <SelectTrigger className="w-full">

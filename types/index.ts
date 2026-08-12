@@ -67,6 +67,8 @@ export interface GoalDocument {
   startDate: Date;
   targetDate?: Date;
   status: GoalStatus;
+  exerciseId?: Types.ObjectId;
+  muscle?: string;
   createdAt: Date;
   updatedAt: Date;
 }

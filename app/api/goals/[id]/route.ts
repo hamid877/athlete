@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import Goal from "@/models/goal.model";
 import { updateGoalSchema } from "@/validators/goal.schema";
+import { syncGoal } from "@/lib/goals/sync";
 
 export async function GET(
   req: Request,
@@ -60,6 +61,8 @@ export async function PUT(
     if (!goal) {
       return NextResponse.json({ error: "Goal not found" }, { status: 404 });
     }
+
+    await syncGoal(goal);
 
     return NextResponse.json(goal);
   } catch (error) {

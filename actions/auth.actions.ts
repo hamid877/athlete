@@ -8,6 +8,7 @@ import { auth, signIn } from "@/lib/auth";
 import User from "@/models/User";
 import WeightLog from "@/models/weight-log.model";
 import Goal from "@/models/goal.model";
+import { syncGoal } from "@/lib/goals/sync";
 import {
   signUpSchema,
   onboardingSchema,
@@ -105,7 +106,7 @@ export async function completeOnboarding(
     weightKg: parsed.data.weightKg,
   });
 
-  await Goal.create({
+  const goal = await Goal.create({
     userId: user._id,
     type: parsed.data.goalType,
     title: parsed.data.goalTitle,
@@ -115,6 +116,8 @@ export async function completeOnboarding(
     unit: parsed.data.goalUnit,
     status: "active",
   });
+
+  await syncGoal(goal);
 
   redirect("/dashboard");
 }

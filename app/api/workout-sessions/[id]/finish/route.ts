@@ -5,6 +5,7 @@ import WorkoutSession from "@/models/WorkoutSession";
 import { calculateSetVolume } from "@/lib/performance/volume";
 import { generateGrowthAnalysis } from "@/actions/growth-intelligence";
 import { saveGrowthSnapshot } from "@/lib/growth-intelligence";
+import { syncGoalsForUser } from "@/lib/goals/sync";
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -105,11 +106,18 @@ export async function PATCH(
     const userId = userSession.user.id;
     (async () => {
       try {
+        await syncGoalsForUser(userId, "workout_completed");
+      } catch (err) {
+        console.error("Failed to sync goals for workout completion:", err);
+      }
+      try {
         const analysisResult = await generateGrowthAnalysis(userId);
         await saveGrowthSnapshot(userId, analysisResult);
         console.log(`Growth snapshot saved for user ${userId}`);
+        
+        await syncGoalsForUser(userId, "growth_analyzed");
       } catch (err) {
-        console.error("Failed to generate growth analysis:", err);
+        console.error("Failed to generate growth analysis or sync:", err);
       }
     })();
 

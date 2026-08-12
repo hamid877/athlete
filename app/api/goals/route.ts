@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import Goal from "@/models/goal.model";
 import { createGoalSchema } from "@/validators/goal.schema";
+import { syncGoal } from "@/lib/goals/sync";
 
 export async function GET(req: Request) {
   try {
@@ -50,6 +51,8 @@ export async function POST(req: Request) {
       ...validation.data,
       userId: session.user.id,
     });
+
+    await syncGoal(goal);
 
     return NextResponse.json(goal, { status: 201 });
   } catch (error) {

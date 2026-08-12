@@ -24,6 +24,13 @@ const goalSchema = new Schema<GoalDocument>(
       enum: ["active", "achieved", "archived"],
       default: "active",
     },
+    exerciseId: {
+      type: Schema.Types.ObjectId,
+      ref: "Exercise",
+    },
+    muscle: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
