@@ -18,6 +18,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import type { NutritionTargets, MealDocument } from "@/types";
+import { NutritionHistory } from "./components/NutritionHistory";
 
 export default function NutritionClient() {
   const [loading, setLoading] = useState(true);
@@ -25,6 +26,7 @@ export default function NutritionClient() {
 
   const [targets, setTargets] = useState<NutritionTargets | null>(null);
   const [meals, setMeals] = useState<MealDocument[]>([]);
+  const [view, setView] = useState<"today" | "history">("today");
 
   // Date state
   const [dateString] = useState(() => format(new Date(), "yyyy-MM-dd"));
@@ -284,12 +286,38 @@ export default function NutritionClient() {
 
   return (
     <div className="max-w-md mx-auto p-4 space-y-6 mb-20">
-      <div>
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Today&apos;s Nutrition</h1>
-        <p className="text-[var(--text-secondary)] mt-1">{format(new Date(), "EEEE, MMMM d")}</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Today&apos;s Nutrition</h1>
+          <p className="text-[var(--text-secondary)] mt-1">{format(new Date(), "EEEE, MMMM d")}</p>
+        </div>
+        <div className="bg-[var(--background-subtle)] p-1 rounded-xl border border-[var(--border)] flex gap-1">
+          <button
+            onClick={() => setView("today")}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              view === "today"
+                ? "bg-[var(--surface)] text-[var(--text-primary)] shadow-sm border border-[var(--border)]"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            Today
+          </button>
+          <button
+            onClick={() => setView("history")}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              view === "history"
+                ? "bg-[var(--surface)] text-[var(--text-primary)] shadow-sm border border-[var(--border)]"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            History
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      {view === "today" ? (
+        <>
+          <div className="grid grid-cols-1 gap-4">
         {/* Calories Progress */}
         <Card className="border-[var(--border)] bg-[var(--background-secondary)]">
           <CardContent className="pt-6">
@@ -378,6 +406,10 @@ export default function NutritionClient() {
           </div>
         )}
       </div>
+        </>
+      ) : (
+        <NutritionHistory />
+      )}
 
       {/* Add/Edit Meal Dialog */}
       <Dialog open={isMealDialogOpen} onOpenChange={setIsMealDialogOpen}>

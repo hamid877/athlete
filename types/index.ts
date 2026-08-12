@@ -109,6 +109,15 @@ export interface MealDocument {
   updatedAt: Date;
 }
 
+export interface NutritionHistoryItem {
+  dateString: string;
+  formattedDate: string;
+  calories: number;
+  protein: number;
+  targetCalories: number;
+  targetProtein: number;
+}
+
 /* ─── Exercise ──────────────────────────────────────────────── */
 
 export type MuscleGroup =
