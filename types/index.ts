@@ -96,6 +96,19 @@ export interface DailyNutritionDocument {
   updatedAt: Date;
 }
 
+export interface MealDocument {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  dateString: string; // Format: YYYY-MM-DD
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 /* ─── Exercise ──────────────────────────────────────────────── */
 
 export type MuscleGroup =

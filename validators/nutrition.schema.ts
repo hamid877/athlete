@@ -19,3 +19,11 @@ export const logDailyNutritionSchema = z.object({
 });
 
 export type LogDailyNutritionInput = z.infer<typeof logDailyNutritionSchema>;
+
+export const mealSchema = z.object({
+  dateString: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format, expected YYYY-MM-DD"),
+  name: z.string().trim().min(1, "Meal name is required").max(100, "Meal name cannot exceed 100 characters"),
+  ...nutritionTargetBase,
+});
+
+export type MealInput = z.infer<typeof mealSchema>;
