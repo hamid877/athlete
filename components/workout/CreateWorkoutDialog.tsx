@@ -44,8 +44,13 @@ export default function CreateWorkoutDialog({
   onOpenChange,
   onCreate,
 }: CreateWorkoutDialogProps) {
+  const getCurrentWeekday = () => {
+    if (typeof window === "undefined") return "Monday";
+    return new Date().toLocaleDateString("en-US", { weekday: "long" });
+  };
+
   const [name, setName] = useState("");
-  const [day, setDay] = useState("Monday");
+  const [day, setDay] = useState<string>("Monday");
   const [isRestDay, setIsRestDay] = useState(false);
   const [duration, setDuration] = useState("60");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +62,7 @@ export default function CreateWorkoutDialog({
     setPrevOpen(open);
     if (open) {
       setName("");
-      setDay("Monday");
+      setDay(getCurrentWeekday());
       setIsRestDay(false);
       setDuration("60");
       setSubmitError(null);

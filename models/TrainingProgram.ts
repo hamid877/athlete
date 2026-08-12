@@ -39,6 +39,8 @@ export interface TrainingProgramDocument
 
   isActive: boolean;
 
+  activatedAt?: Date;
+
   workoutDays: WorkoutDay[];
 
   description?: string;
@@ -100,6 +102,10 @@ const trainingProgramSchema = new Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+
+    activatedAt: {
+      type: Date,
     },
 
     isArchived: {

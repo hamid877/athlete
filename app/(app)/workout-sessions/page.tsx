@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Dumbbell, Calendar, ChevronRight, Plus } from "lucide-react";
+import { Dumbbell, Calendar, ChevronRight, Plus, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -37,13 +37,15 @@ interface WorkoutCardProps {
   day: WorkoutDay;
   onStart: (workoutId: string) => Promise<void>;
   starting: string | null;
+  isDisabled: boolean;
+  isRecommended: boolean;
 }
 
-function WorkoutCard({ day, onStart, starting }: WorkoutCardProps) {
+function WorkoutCard({ day, onStart, starting, isDisabled, isRecommended }: WorkoutCardProps) {
   const isStarting = starting === day.workoutId;
 
   return (
-    <Card className="flex flex-col gap-4 p-5 transition-shadow hover:shadow-md">
+    <Card className={`flex flex-col gap-4 p-5 transition-shadow ${isRecommended ? 'border-[var(--primary)] ring-1 ring-[var(--primary)] shadow-md bg-[var(--primary-subtle)]/30' : 'hover:shadow-md'}`}>
       {/* Header row */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
@@ -53,6 +55,9 @@ function WorkoutCard({ day, onStart, starting }: WorkoutCardProps) {
           <span className="inline-flex items-center gap-1 text-xs text-[var(--text-secondary)]">
             <Calendar className="h-3 w-3 shrink-0" />
             {day.day}
+            {isRecommended && (
+              <span className="ml-2 font-bold text-[var(--primary)]">(Today&apos;s Workout)</span>
+            )}
           </span>
         </div>
 
@@ -66,8 +71,8 @@ function WorkoutCard({ day, onStart, starting }: WorkoutCardProps) {
       {/* Start button */}
       <Button
         id={`start-workout-${day.workoutId}`}
-        className="w-full"
-        disabled={isStarting || starting !== null}
+        className={`w-full ${isRecommended ? '' : (isDisabled ? 'opacity-50' : '')}`}
+        disabled={isStarting || starting !== null || isDisabled}
         onClick={() => onStart(day.workoutId)}
         aria-label={`Start ${day.workoutName}`}
       >
@@ -96,12 +101,19 @@ export default function WorkoutSessionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasActiveProgram, setHasActiveProgram] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const [hasStartedFirstSession, setHasStartedFirstSession] = useState(true);
+  const [currentLocalWeekday, setCurrentLocalWeekday] = useState<string>("");
 
   // workoutId of the card currently being started (null if none)
   const [starting, setStarting] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchActive() {
+      // Determine the user's current local weekday exactly on the client
+      const dayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
+      setCurrentLocalWeekday(dayName);
+
       try {
         const res = await fetch("/api/programs/active");
 
@@ -117,6 +129,10 @@ export default function WorkoutSessionsPage() {
 
         const data = await res.json();
         setWorkoutDays(data.workoutDays ?? []);
+        
+        if (typeof data.hasStartedFirstSession === 'boolean') {
+          setHasStartedFirstSession(data.hasStartedFirstSession);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong");
       } finally {
@@ -132,7 +148,10 @@ export default function WorkoutSessionsPage() {
     try {
       const res = await fetch("/api/workout-sessions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-timezone": Intl.DateTimeFormat().resolvedOptions().timeZone 
+        },
         body: JSON.stringify({ workoutId }),
       });
 
@@ -174,6 +193,8 @@ export default function WorkoutSessionsPage() {
     );
   }
 
+  const isFirstWorkoutRestrictionActive = !hasStartedFirstSession && currentLocalWeekday !== "";
+
   return (
     <div className="flex flex-col gap-6">
       {/* Page header */}
@@ -193,6 +214,15 @@ export default function WorkoutSessionsPage() {
         </div>
       )}
 
+      {isFirstWorkoutRestrictionActive && (
+        <div className="rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] px-4 py-3 text-sm text-[var(--primary)] flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+          <p>
+            <strong>New Program Activated:</strong> To begin your program correctly, your first session must be today&apos;s scheduled workout ({currentLocalWeekday}).
+          </p>
+        </div>
+      )}
+
       {/* Workout cards / skeletons */}
       <div className="flex flex-col gap-3">
         {isLoading ? (
@@ -209,14 +239,21 @@ export default function WorkoutSessionsPage() {
             </p>
           </div>
         ) : (
-          workoutDays.map((day) => (
-            <WorkoutCard
-              key={day.workoutId}
-              day={day}
-              onStart={handleStartWorkout}
-              starting={starting}
-            />
-          ))
+          workoutDays.map((day) => {
+            const isToday = day.day === currentLocalWeekday;
+            const isDisabled = isFirstWorkoutRestrictionActive && !isToday;
+            
+            return (
+              <WorkoutCard
+                key={day.workoutId}
+                day={day}
+                onStart={handleStartWorkout}
+                starting={starting}
+                isDisabled={isDisabled}
+                isRecommended={isFirstWorkoutRestrictionActive ? isToday : false}
+              />
+            );
+          })
         )}
       </div>
     </div>

@@ -221,7 +221,9 @@ export default function WorkoutHubClient() {
       setError(false);
       setLoading(true);
       try {
-        const res = await fetch("/api/workouts/hub");
+        const res = await fetch("/api/workouts/hub", {
+          headers: { "x-timezone": Intl.DateTimeFormat().resolvedOptions().timeZone }
+        });
         if (!res.ok) throw new Error("Failed to load");
         const json = (await res.json()) as WorkoutHubAPIResponse;
         if (!cancelled) setData(json);

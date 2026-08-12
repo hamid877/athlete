@@ -220,12 +220,13 @@ export default function DashboardClient() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const headers = { "x-timezone": Intl.DateTimeFormat().resolvedOptions().timeZone };
         const [dashRes, recRes, volRes, stimRes, recordsRes] = await Promise.all([
-          fetch("/api/dashboard"),
-          fetch("/api/recovery"),
-          fetch("/api/volume"),
-          fetch("/api/stimulus"),
-          fetch("/api/records"),
+          fetch("/api/dashboard", { headers }),
+          fetch("/api/recovery", { headers }),
+          fetch("/api/volume", { headers }),
+          fetch("/api/stimulus", { headers }),
+          fetch("/api/records", { headers }),
         ]);
         if (dashRes.ok) {
           setData(await dashRes.json());

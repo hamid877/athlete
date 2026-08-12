@@ -18,6 +18,7 @@ import Workout from "@/models/Workout";
 import User from "@/models/User";
 import { calculateSetVolume } from "@/lib/performance/volume";
 import type { WeightInputType } from "@/types";
+import { getUserTimezone, getLocalCalendarDate } from "@/lib/date-utils";
 
 /* ── Internal lean types ───────────────────────────────────── */
 
@@ -166,9 +167,9 @@ function computeStreak(sessions: { finishedAt?: Date }[]): number {
   return streak;
 }
 
-/* ── Route handler ─────────────────────────────────────────── */
+/* ── Route handler ── */
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: Request): Promise<NextResponse> {
   try {
     await connectDB();
     const session = await auth();
@@ -180,7 +181,7 @@ export async function GET(): Promise<NextResponse> {
     const userId = session.user.id;
 
     /* ── Week boundary (Monday-based) ── */
-    const now = new Date();
+    const now = getLocalCalendarDate(new Date(), getUserTimezone(request));
     const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1;
     const startOfWeek = new Date(now);
     startOfWeek.setHours(0, 0, 0, 0);
@@ -193,10 +194,6 @@ export async function GET(): Promise<NextResponse> {
     const [
       activeSessionDoc,
       activeProgramDoc,
-      weekSessions,
-      recentDocs,
-      allCompletedDocs,
-      userDoc,
     ] = await Promise.all([
       WorkoutSession.findOne({ userId, status: "in_progress" })
         .sort({ startedAt: -1 })
@@ -208,11 +205,26 @@ export async function GET(): Promise<NextResponse> {
           select: "name exercises",
         })
         .lean(),
+    ]);
 
+    let actualStartOfWeek = startOfWeek;
+    const activeProgramData = activeProgramDoc as { activatedAt?: Date } | null;
+    if (activeProgramData?.activatedAt) {
+      if (activeProgramData.activatedAt > startOfWeek) {
+        actualStartOfWeek = activeProgramData.activatedAt;
+      }
+    }
+
+    const [
+      weekSessions,
+      recentDocs,
+      allCompletedDocs,
+      userDoc,
+    ] = await Promise.all([
       WorkoutSession.find({
         userId,
         status: "completed",
-        finishedAt: { $gte: startOfWeek },
+        finishedAt: { $gte: actualStartOfWeek },
       })
         .select("finishedAt exercises")
         .populate({ path: "exercises.exerciseId", select: "weightInputType" })

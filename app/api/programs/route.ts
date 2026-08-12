@@ -242,6 +242,7 @@ const finalProgramData = {
   userId: session.user.id,
   name,
   isActive: true,
+  activatedAt: new Date(),
   workoutDays,
   ...(templateId ? { templateId } : { splitType }),
 };

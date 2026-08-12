@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import TrainingProgram from "@/models/TrainingProgram";
+import WorkoutSession from "@/models/WorkoutSession";
 import "@/models/Workout"; // Register Workout model for populate
 
 interface PopulatedWorkout {
@@ -43,6 +44,16 @@ export async function GET() {
       );
     }
 
+    // Check if any workout session has been started since the program was activated
+    let hasStartedFirstSession = true;
+    if (program.activatedAt) {
+      const sessionCount = await WorkoutSession.countDocuments({
+        userId: session.user.id,
+        startedAt: { $gte: program.activatedAt },
+      });
+      hasStartedFirstSession = sessionCount > 0;
+    }
+
     // Cast to a typed array so filter/map have proper types
     const days = program.workoutDays as unknown as LeanWorkoutDay[];
 
@@ -60,7 +71,11 @@ export async function GET() {
         };
       });
 
-    return NextResponse.json({ workoutDays });
+    return NextResponse.json({ 
+      workoutDays, 
+      hasStartedFirstSession,
+      activatedAt: program.activatedAt
+    });
   } catch (error) {
     console.error("GET /api/programs/active error:", error);
     return NextResponse.json(
@@ -69,3 +84,4 @@ export async function GET() {
     );
   }
 }
+

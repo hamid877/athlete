@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import Workout from "@/models/Workout";
 import WorkoutSession from "@/models/WorkoutSession";
+import TrainingProgram from "@/models/TrainingProgram";
 
 const createWorkoutSessionSchema = z.object({
   workoutId: z.string().min(1, "Workout ID is required"),
@@ -38,6 +39,48 @@ export async function POST(req: Request) {
     if (!workout) {
       return NextResponse.json({ error: "Workout not found" }, { status: 404 });
     }
+
+    // --- First Workout Restriction ---
+    const activeProgram = await TrainingProgram.findOne({
+      userId: session.user.id,
+      isActive: true,
+    }).lean();
+
+    if (activeProgram && activeProgram.activatedAt) {
+      const sessionCount = await WorkoutSession.countDocuments({
+        userId: session.user.id,
+        startedAt: { $gte: activeProgram.activatedAt },
+      });
+
+      if (sessionCount === 0) {
+        // This is the FIRST session since the program was activated.
+        const userTimezone = req.headers.get("x-timezone") || "UTC";
+        
+        let currentLocalWeekday = "";
+        try {
+          const formatter = new Intl.DateTimeFormat("en-US", {
+            weekday: "long",
+            timeZone: userTimezone,
+          });
+          currentLocalWeekday = formatter.format(new Date());
+        } catch (e) {
+          console.warn("Invalid timezone provided, falling back to UTC.", e);
+          currentLocalWeekday = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(new Date());
+        }
+
+        const requestedWorkoutDay = activeProgram.workoutDays.find(
+          (wd: { day: string; workoutId?: { toString(): string } | null }) => wd.workoutId?.toString() === workoutId
+        );
+
+        if (requestedWorkoutDay && requestedWorkoutDay.day !== currentLocalWeekday) {
+          return NextResponse.json(
+            { error: `New programs must begin with today's scheduled workout (${currentLocalWeekday}).` },
+            { status: 400 }
+          );
+        }
+      }
+    }
+    // ---------------------------------
 
     const exercises = workout.exercises.map((exercise) => ({
       exerciseId: exercise.exerciseId,
@@ -105,3 +148,4 @@ export async function GET(req: Request) {
     );
   }
 }
+

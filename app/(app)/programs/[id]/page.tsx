@@ -2,11 +2,21 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Calendar, Dumbbell, Coffee } from "lucide-react";
+import { Calendar, Dumbbell, Coffee, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Workout {
   _id: string;
@@ -24,6 +34,7 @@ interface ProgramDetails {
   name: string;
   splitType: string;
   workoutDays: WorkoutDay[];
+  hasStartedFirstSession?: boolean;
 }
 
 export default function ProgramDetailsPage() {
@@ -32,8 +43,14 @@ export default function ProgramDetailsPage() {
   const [program, setProgram] = useState<ProgramDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentLocalWeekday, setCurrentLocalWeekday] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentLocalWeekday(new Date().toLocaleDateString("en-US", { weekday: "long" }));
+    
     // In Next.js App Router, params is unwrapped asynchronously in newer versions, 
     // but typically accessed synchronously. If params.id is missing, abort.
     const id = params?.id;
@@ -63,6 +80,27 @@ export default function ProgramDetailsPage() {
 
     fetchProgram();
   }, [params]);
+
+  const handleDelete = async () => {
+    if (!program) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/programs/${program._id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete program");
+      }
+      toast.success("Training program deleted successfully");
+      router.push("/programs");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete program");
+      setIsDeleteDialogOpen(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const formatSplitType = (type: string) => {
     const splits: Record<string, string> = {
@@ -106,11 +144,35 @@ export default function ProgramDetailsPage() {
 
   return (
     <div className="flex flex-col min-h-[100dvh] w-full max-w-4xl mx-auto px-4 py-6 sm:py-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">{program.name}</h1>
-        <div className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-sm font-semibold text-secondary-foreground">
-          {formatSplitType(program.splitType)}
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">{program.name}</h1>
+          <div className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-sm font-semibold text-secondary-foreground">
+            {formatSplitType(program.splitType)}
+          </div>
         </div>
+
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="destructive">Delete Program</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete this training program?</DialogTitle>
+              <DialogDescription>
+                This will permanently remove this program and its schedule. Your completed workout history and other data will NOT be deleted.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                {isDeleting ? "Deleting..." : "Delete Program"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="space-y-6">
@@ -123,39 +185,67 @@ export default function ProgramDetailsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 {program.workoutDays.map((dayObj, index) => {
   const isRest = dayObj.isRestDay;
+  const isToday = dayObj.day === currentLocalWeekday;
+  const isFirstWorkoutRestrictionActive = program.hasStartedFirstSession === false;
+  
+  let isDisabled = false;
+  if (isFirstWorkoutRestrictionActive && !isToday) {
+    isDisabled = true;
+  }
+
+  // If today is a rest day, all workouts are disabled if restriction is active
+  // Wait, if today is a rest day and restriction is active, the user CANNOT start a workout today.
+  // We should just enforce: if restriction is active, only `isToday` can be selected.
+  // And if `isToday` is a rest day, it won't be selectable anyway.
+
+  const isInteractive = !isRest && dayObj.workoutId && !isDisabled;
 
   const card = (
     <Card
       className={`flex flex-col transition-colors ${
-        !isRest && dayObj.workoutId
+        isInteractive
           ? "cursor-pointer hover:border-primary/50"
           : "bg-muted/30"
-      }`}
+      } ${isToday && isFirstWorkoutRestrictionActive ? "border-primary ring-1 ring-primary shadow-md bg-primary-subtle/30" : ""} ${isDisabled ? "opacity-50 pointer-events-none" : ""}`}
     >
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg">{dayObj.day}</CardTitle>
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardTitle className="text-lg">
+          {dayObj.day}
+          {isToday && <span className="ml-2 text-xs font-semibold text-primary uppercase tracking-wider">Today</span>}
+        </CardTitle>
+        {isDisabled && <Lock className="h-4 w-4 text-muted-foreground" />}
       </CardHeader>
 
       <CardContent>
         {isRest ? (
-          <div className="flex items-center text-muted-foreground">
-            <Coffee className="mr-2 h-4 w-4" />
-            <span className="font-medium">Rest Day</span>
+          <div className="flex flex-col">
+            <div className="flex items-center text-muted-foreground">
+              <Coffee className="mr-2 h-4 w-4" />
+              <span className="font-medium">Rest Day</span>
+            </div>
+            {isToday && isFirstWorkoutRestrictionActive && (
+              <p className="text-xs text-muted-foreground mt-2">Today&apos;s scheduled workout is a rest day.</p>
+            )}
           </div>
         ) : (
-          <div className="flex items-center">
-            <Dumbbell className="mr-2 h-4 w-4 text-primary" />
-            <span className="font-medium line-clamp-1">
-              {dayObj.workoutId?.name}
-            </span>
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              <Dumbbell className={`mr-2 h-4 w-4 ${isDisabled ? 'text-muted-foreground' : 'text-primary'}`} />
+              <span className="font-medium line-clamp-1">
+                {dayObj.workoutId?.name}
+              </span>
+            </div>
+            {isDisabled && (
+              <p className="text-xs text-muted-foreground mt-2">Start with today&apos;s scheduled workout.</p>
+            )}
           </div>
         )}
       </CardContent>
     </Card>
   );
 
-  if (isRest || !dayObj.workoutId) {
-    return <div key={index}>{card}</div>;
+  if (!isInteractive || !dayObj.workoutId) {
+    return <div key={index} className={isDisabled ? 'cursor-not-allowed' : ''}>{card}</div>;
   }
 
   return (
@@ -163,6 +253,11 @@ export default function ProgramDetailsPage() {
       key={index}
       href={`/workouts/${dayObj.workoutId._id}`}
       className="block"
+      aria-disabled={isDisabled}
+      tabIndex={isDisabled ? -1 : 0}
+      onClick={(e) => {
+        if (isDisabled) e.preventDefault();
+      }}
     >
       {card}
     </Link>

@@ -4,8 +4,9 @@ import { connectDB } from "@/lib/db";
 import TrainingProgram from "@/models/TrainingProgram";
 import WorkoutSession from "@/models/WorkoutSession";
 import Workout from "@/models/Workout";
+import { getUserTimezone, getLocalCalendarDate } from "@/lib/date-utils";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectDB();
     const session = await auth();
@@ -26,16 +27,29 @@ export async function GET() {
     });
 
     // 3. Weekly Workouts (Start of week: Monday)
-    const now = new Date();
+    const now = getLocalCalendarDate(new Date(), getUserTimezone(request));
     const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // 0 = Monday, 6 = Sunday
     const startOfWeek = new Date(now);
     startOfWeek.setHours(0, 0, 0, 0);
     startOfWeek.setDate(now.getDate() - dayOfWeek);
 
+    // If active program has activatedAt, use the later of Monday OR activatedAt
+    const activeProgram = await TrainingProgram.findOne({
+      userId,
+      isActive: true,
+    }).lean();
+
+    let actualStartOfWeek = startOfWeek;
+    if (activeProgram?.activatedAt) {
+      if (activeProgram.activatedAt > startOfWeek) {
+        actualStartOfWeek = activeProgram.activatedAt;
+      }
+    }
+
     const weeklyWorkouts = await WorkoutSession.countDocuments({
       userId,
       status: "completed",
-      finishedAt: { $gte: startOfWeek },
+      finishedAt: { $gte: actualStartOfWeek },
     });
 
     // 4. Current Streak & Total Exercises Logged
@@ -118,10 +132,6 @@ if (lastWorkoutSession) {
 
     // 7. Today's Workout
     let todayWorkout = null;
-    const activeProgram = await TrainingProgram.findOne({
-      userId,
-      isActive: true,
-    }).lean();
 
     if (activeProgram) {
       const dayNames = [
@@ -156,7 +166,7 @@ if (workout) {
 
     let isTodayWorkoutCompleted = false;
     if (todayWorkout) {
-      const todayStart = new Date();
+      const todayStart = new Date(now);
       todayStart.setHours(0, 0, 0, 0);
       isTodayWorkoutCompleted = completedSessions.some(
         (sess) =>
