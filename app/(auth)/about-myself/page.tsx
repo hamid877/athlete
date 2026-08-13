@@ -82,7 +82,7 @@ export default function AboutMyselfPage() {
       try {
         const result = await completeAboutMyself(data);
         if (result.success) {
-          toast.success("Profile completed! Welcome to Gym Tracker.");
+          toast.success("Profile completed! Welcome to Repwise.");
           router.push("/dashboard");
         } else {
           toast.error(result.error || "Something went wrong.");

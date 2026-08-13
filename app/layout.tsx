@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Repwise — Track Your Fitness Journey",
   description:
-    "A production-ready gym tracker to log workouts, track nutrition, monitor body composition, and achieve your fitness goals.",
+    "A production-ready Repwise app to log workouts, track nutrition, monitor body composition, and achieve your fitness goals.",
 };
 
 export default function RootLayout({

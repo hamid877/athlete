@@ -46,7 +46,7 @@ export default function LandingPage() {
               <Dumbbell className="h-4 w-4 text-white" strokeWidth={2} />
             </div>
             <span className="text-base font-semibold text-[var(--text-primary)]">
-              Gym Tracker
+              Repwise
             </span>
           </Link>
           <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export default function LandingPage() {
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-6">
           <p className="text-xs text-[var(--text-muted)]">
-            &copy; {new Date().getFullYear()} Gym Tracker. All rights reserved.
+            &copy; {new Date().getFullYear()} Repwise. All rights reserved.
           </p>
           <div className="flex items-center gap-2">
             <Dumbbell
