@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gym Tracker — Track Your Fitness Journey",
+  title: "Repwise — Track Your Fitness Journey",
   description:
     "A production-ready gym tracker to log workouts, track nutrition, monitor body composition, and achieve your fitness goals.",
 };

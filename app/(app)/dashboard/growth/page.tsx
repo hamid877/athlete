@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import GrowthClient from "./GrowthClient";
 
 export const metadata = {
-  title: "Growth Intelligence | Athlete",
+  title: "Growth Intelligence | Repwise",
   description: "Advanced AI analysis of your training trajectory and growth potential.",
 };
 

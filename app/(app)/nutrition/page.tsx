@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import NutritionClient from "./NutritionClient";
 
 export const metadata = {
-  title: "Nutrition | Athlete",
+  title: "Nutrition | Repwise",
   description: "Track your daily nutrition and macros.",
 };
 

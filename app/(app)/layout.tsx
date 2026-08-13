@@ -75,7 +75,7 @@ export default async function AppLayout({
               </svg>
             </div>
             <span className="text-sm font-bold tracking-tight text-[var(--text-primary)]">
-              Athlete
+              Repwise
             </span>
           </div>
           <ProfileMenu user={profileData} />
